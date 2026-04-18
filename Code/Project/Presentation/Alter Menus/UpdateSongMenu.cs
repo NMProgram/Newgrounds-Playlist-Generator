@@ -10,7 +10,8 @@ public class UpdateSongMenu : AlterSongMenu
     [3] Update Release Date
     [4] Update Genre
     [5] Update Level ID
-    [6] Update Audio File
+    [6] Update Availability
+    [7] Update Audio File
     [Q] Return to Alter Song Menu
     ";
     protected override Action GetAction(char inp) => inp switch
@@ -20,7 +21,8 @@ public class UpdateSongMenu : AlterSongMenu
         '3' => Date,
         '4' => Genre,
         '5' => LevelID,
-        '6' => AudioFile,
+        '6' => Available,
+        '7' => AudioFile,
         _ => () => _active = false
     };
     void UpdateData<T>(string type, Action<Song> action, Func<Song, T> getter)
@@ -53,6 +55,11 @@ public class UpdateSongMenu : AlterSongMenu
     void LevelID()
     {
         UpdateData("Level ID", newSong => newSong.SetLevelID(GetLevelID()), any => any.LevelID);
+    }
+    void Available()
+    {
+        UpdateData("Availability on Newgrounds", 
+        newSong => newSong.SetAvailable(GetAvailability()), any => any.Available);
     }
     void AudioFile()
     {

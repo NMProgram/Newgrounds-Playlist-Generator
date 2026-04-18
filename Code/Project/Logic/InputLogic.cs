@@ -50,7 +50,7 @@ public static class InputLogic
         { return (true, Genre.RNB, null); }
         return Enum.TryParse(newGenre, true, out Genre res) ? (true, res, null) : (false, default, err);
     }
-    public static (bool, int, string?) IsValidAvailability(string available) => available switch
+    public static (bool, int, string?) IsValidAvailability(string available) => available.ToLower() switch
     {
         "yes" or "true" or "1" => (true, 1, null),
         "no" or "false" or "0" => (true, 0, null),

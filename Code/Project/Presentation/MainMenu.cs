@@ -13,4 +13,14 @@ public class MainMenu : Menu
         'Q' => () => Environment.Exit(0),
         _ => () => { Console.WriteLine("\nInvalid Key!"); Console.ReadKey(); }
     };
+    protected (bool, long, string?) ValidID(string inp, Func<long, (bool, long, string?)> func)
+    {
+        (bool res, long val, string? err) = InputLogic.IsValidInteger(inp);
+        return res ? func(val) : (res, default, err);
+    }
+    protected (bool, T?, string?) ValidString<T>(string inp, Func<string, (bool, T, string?)> func)
+    {
+        (bool res, _, string? err) = InputLogic.IsNotEmpty(inp);
+        return res ? func(inp) : (res, default(T), err);
+    }
 }

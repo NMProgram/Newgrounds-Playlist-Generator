@@ -16,15 +16,15 @@ public class AccessLogic
         _sAccess.Insert(song);
         foreach (var comp in song.Composers)
         {
-            long id = _cAccess.Insert(comp);
-            _scAccess.Insert(new(song.ID, id));
+            _cAccess.Insert(comp);
+            _scAccess.Insert(new(song.ID, comp.ID));
         }
     }
     public void AddComposer(Composer comp)
     {
-        long id = _cAccess.Insert(comp);
+        _cAccess.Insert(comp);
         foreach (var song in comp.Songs)
-        { _scAccess.Insert(new(song.ID, id)); }
+        { _scAccess.Insert(new(song.ID, comp.ID)); }
     }
     public void Update(Song oldSong, Song newSong)
     {

@@ -75,6 +75,7 @@ public class Composer : IEquatable<Composer>, IComparable<Composer>, ICloneable,
         return -1;
     }
     public long GetAge() => DateTime.Today.Year - BirthYear;
+    public void SetID(long id) => ID = Math.Max(id, 0);
     public void SetName(string name) => Name = name;
     public void SetJoinDate(DateTime date) => JoinDate = date;
     public void SetAge(long age) => BirthYear = DateTime.Today.Year - age;

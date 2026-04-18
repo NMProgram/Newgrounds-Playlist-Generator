@@ -91,6 +91,6 @@ public class Composer : IEquatable<Composer>, IComparable<Composer>, ICloneable,
     {
         _ = Play();
         return string.Join('\n', GetName(), GetJoinDate(), 
-        GetAgeStr(), GetDescription(), GetAvailable(), GetSongs());
+        GetAgeStr(), GetDescription(), GetAvailable(), GetSongs()).Bold();
     }
 }

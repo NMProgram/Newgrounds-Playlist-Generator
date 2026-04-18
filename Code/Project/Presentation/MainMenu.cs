@@ -1,7 +1,7 @@
 public class MainMenu : Menu
 {
     protected override string MenuStr => @"
-    [1] Alter Songs
+    [1] Alter Data
     [2] Search Song Data
     [3] Filter Song Data
     [Q] Quit

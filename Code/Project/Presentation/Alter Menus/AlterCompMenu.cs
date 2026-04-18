@@ -68,6 +68,7 @@ public class AlterCompMenu : AlterMenu
         Composer comp = GetCompDetails();
         _access.AddComposer(comp);
         Console.WriteLine($"Successfully added the following Composer Details:\n\n{comp}");
+        AskEnter();
     }
     void Delete()
     {
@@ -76,5 +77,6 @@ public class AlterCompMenu : AlterMenu
         string inp = Input($"Are you sure you want to delete the composer \'{comp.Name}\'?\nEnter your choice here: ");
         if (!inp.ToLower().StartsWith('y')) { Console.WriteLine($"Cancelled deletion of \'{comp.Name}\'."); return; }
         Console.WriteLine($"Successfully deleted the following Song Details:\n\n{comp}");
+        AskEnter();
     }
 }

@@ -41,6 +41,7 @@ public class AlterSongMenu : AlterMenu
         );
         _access.AddSong(song);
         Console.WriteLine($"Successfully added the following Song Details:\n\n{song}");
+        AskEnter();
     }
     void Delete()
     {
@@ -49,5 +50,6 @@ public class AlterSongMenu : AlterMenu
         string inp = Input($"Are you sure you want to delete the song \'{song.Name}\'?\nEnter your choice here: ");
         if (!inp.ToLower().StartsWith('y')) { Console.WriteLine($"Cancelled deletion of \'{song.Name}\'."); return; }
         Console.WriteLine($"Successfully deleted the following Song Details:\n\n{song}");
+        AskEnter();
     }
 }

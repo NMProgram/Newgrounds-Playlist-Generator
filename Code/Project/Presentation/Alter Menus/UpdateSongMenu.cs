@@ -28,12 +28,8 @@ public class UpdateSongMenu : AlterSongMenu
     void UpdateData<T>(string type, Action<Song> action, Func<Song, T> getter)
     {
         UpdateData(type, _prompts[0], x => CheckID(x, _access.IsInDatabase), action, getter);
+        AskEnter();
     }
-    // will be used for Composer part
-    // void UpdateData<T>(string type, Action<Composer> action, Func<Composer, T> getter)
-    // {
-    //     UpdateData(type, InputLogic.IsNotEmpty, action, getter);
-    // }
     void ID()
     {
         UpdateData("ID", newSong => newSong.SetID(GetID(_access.IsNotInDatabase, true)), any => any.ID);

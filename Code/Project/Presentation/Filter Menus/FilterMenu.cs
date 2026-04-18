@@ -15,6 +15,7 @@ public class FilterMenu : MainMenu
     {
         string msg = obj is null ? "No results found." : obj.ToString()!;
         Console.WriteLine(msg);
+        AskEnter();
     }
     protected void PrintDetails<T>(T[] objs, Func<T, string> getter)
     {

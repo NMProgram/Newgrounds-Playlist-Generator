@@ -30,6 +30,11 @@ public abstract class Menu
             }
         }
     }
+    protected void AskEnter()
+    {
+        InputKey("\nPress any key to continue: ");
+        Console.Clear();
+    }
     public void Start()
     {
         

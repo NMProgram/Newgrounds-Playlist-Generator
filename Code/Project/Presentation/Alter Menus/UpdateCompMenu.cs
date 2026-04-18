@@ -37,6 +37,7 @@ public class UpdateCompMenu : AlterCompMenu
     void UpdateData<T>(string type, Action<Composer> action, Func<Composer, T> getter)
     {
         UpdateData(type, _prompts[0], InputLogic.IsNotEmpty, action, getter);
+        AskEnter();
     }
     void AddSong()
     {

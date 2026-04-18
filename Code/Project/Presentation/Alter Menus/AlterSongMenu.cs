@@ -17,9 +17,9 @@ public class AlterSongMenu : AlterMenu
     ";
     protected override Action GetAction(char inp) => inp switch
     {
-        '1' => Add,
+        '1' => () => CheckActivity(Add),
         '2' => new UpdateSongMenu().Start,
-        '3' => Delete,
+        '3' => () => CheckActivity(Delete),
         _ => () => _active = false
     };
     
@@ -33,7 +33,7 @@ public class AlterSongMenu : AlterMenu
     protected byte GetAvailability() 
         => (byte) Validate(_prompts[5], x => ValidString(x, InputLogic.IsValidAvailability));
     protected byte[] GetAudioFile() => Validate(_prompts[6], x => ValidString(x, InputLogic.IsValidMP3)) ?? [];
-    void Add()
+    public void Add()
     {
         Song song = new(
             GetID(_access.IsNotInDatabase), GetName(), GetReleaseDate(), (int)GetGenre(), 

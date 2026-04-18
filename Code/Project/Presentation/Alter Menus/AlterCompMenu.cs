@@ -18,9 +18,9 @@ public class AlterCompMenu : AlterMenu
     ";
     protected override Action GetAction(char inp) => inp switch
     {
-        '1' => Add,
+        '1' => () => CheckActivity(Add),
         '2' => new UpdateCompMenu().Start,
-        '3' => Delete,
+        '3' => () => CheckActivity(Delete),
         _ => () => _active = false
     };
     protected string NamedPrompt(int index)

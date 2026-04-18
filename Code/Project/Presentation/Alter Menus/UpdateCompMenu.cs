@@ -12,13 +12,13 @@ public class UpdateCompMenu : AlterCompMenu
     ";
     protected override Action GetAction(char inp) => inp switch
     {
-        '1' => AddSong,
-        '2' => UpdateSong,
-        '3' => Name,
-        '4' => Date,
-        '5' => Age,
-        '6' => Description,
-        '7' => Available,
+        '1' => () => CheckActivity(AddSong),
+        '2' => () => CheckActivity(UpdateSong),
+        '3' => () => CheckActivity(Name),
+        '4' => () => CheckActivity(Date),
+        '5' => () => CheckActivity(Age),
+        '6' => () => CheckActivity(Description),
+        '7' => () => CheckActivity(Available),
         _ => () => _active = false
     };
     (bool, long, string?) CheckSongIDs(string inp, string name, Func<string, long, (bool, long, string?)> func)

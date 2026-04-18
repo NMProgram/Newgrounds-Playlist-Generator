@@ -17,15 +17,15 @@ public class FilterSongMenu : FilterMenu
     ";
     protected override Action GetAction(char inp) => inp switch
     {
-        '1' => ClosestID,
-        '2' => Match,
-        '3' => BetweenIDs,
-        '4' => BetweenLevelIDs,
-        '5' => BetweenNames,
-        '6' => BetweenDates,
-        '7' => WithGenre,
-        '8' => UnavailableSongs,
-        '9' => FromComposer,
+        '1' => () => CheckActivity(ClosestID),
+        '2' => () => CheckActivity(Match),
+        '3' => () => CheckActivity(BetweenIDs),
+        '4' => () => CheckActivity(BetweenLevelIDs),
+        '5' => () => CheckActivity(BetweenNames),
+        '6' => () => CheckActivity(BetweenDates),
+        '7' => () => CheckActivity(WithGenre),
+        '8' => () => CheckActivity(UnavailableSongs),
+        '9' => () => CheckActivity(FromComposer),
         _ => () => _active = false
     };
     void IDChecker(Func<long, long, IEnumerable<Song>> selector, string prefix = "")

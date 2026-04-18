@@ -93,7 +93,7 @@ public class AccessLogic
     }
     public (bool, long, string?) IsUniqueLevelID(long id)
     {
-        return _sAccess.GetByLevelID(id) is not null ? (true, id, null) : (false, -1, $"Level ID {id} has already been used.");
+        return _sAccess.GetByLevelID(id) is null ? (true, id, null) : (false, -1, $"Level ID {id} has already been used.");
     }
     public (bool, long, string?) IsNewSong(string name, long id)
     {

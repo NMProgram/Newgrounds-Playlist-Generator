@@ -1,7 +1,7 @@
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json.Serialization.Metadata;
 
-public class FilterSongMenu : Menu
+public class FilterSongMenu : FilterMenu
 {
     protected override string MenuStr => @"
     [1] Search Song with Closest ID
@@ -24,54 +24,55 @@ public class FilterSongMenu : Menu
         '7' => FromComposer,
         _ => () => _active = false
     };
-    void PrintSongDetails(Song? song)
+    
+    void PrintDetails(IEnumerable<Song> songs)
     {
-        string msg = song is null ? "No results found." : song.ToString();
-        Console.WriteLine(msg);
-    }
-    void PrintSongDetails(Song[] songs)
-    {
-        Console.WriteLine($"Found {songs.Length} results:\n");
-        for (int i = 0; i < songs.Length; i++)
-        {
-            Song? song = songs[i];
-            Console.WriteLine($"#{i + 1}: \'{song.Name}\' (ID: {song.ID})");
-        }
-        int[] list = Enumerable.Sequence(1, songs.Length, 1).ToArray();
-        int option = Validate("Enter the number next to the entry you wish to check out: ", 
-        InputLogic.IsValidInteger, x => InputLogic.IsInOptions(int.Parse(x), list));
-        PrintSongDetails(songs[option - 1]);
+        PrintDetails([..songs], song => $"\'{song.Name}\' (ID: {song.ID})");
     }
     void ClosestID()
     {
         long id = Validate("Enter an ID: ", InputLogic.IsValidInteger);
         Song? song = _access.GetClosestMatch(id);
-        PrintSongDetails(song);
+        PrintDetails(song);
     }
     void Match()
     {
         string search = Input("Enter a search term: ");
         IEnumerable<Song> songs = _access.GetMatches(search);
-        PrintSongDetails([..songs]);
+        PrintDetails(songs);
     }
     void BetweenIDs()
     {
-        
+        long lowID = Validate("Enter the first ID: ", x => ValidString(x, InputLogic.IsValidInteger));
+        long highID = Validate("Enter the last ID: ", x => ValidString(x, InputLogic.IsValidInteger));
+        IEnumerable<Song> songs = _access.GetBetweenSongData(lowID, highID);
+        PrintDetails(songs);
     }
     void BetweenNames()
     {
-        
+        string first = Validate("Enter the first name: ", InputLogic.IsNotEmpty);
+        string last = Validate("Enter the last name: ", InputLogic.IsNotEmpty);
+        IEnumerable<Song> songs = _access.GetBetweenSongData(first, last);
+        PrintDetails(songs);
     }
     void BetweenDates()
     {
-        
+        DateTime first = Validate("Enter the starting date: ", x => ValidString(x, InputLogic.IsValidDate));
+        DateTime last = Validate("Enter the ending date: ", x => ValidString(x, InputLogic.IsValidDate));
+        IEnumerable<Song> songs = _access.GetBetweenSongData(first, last);
+        PrintDetails(songs);
     }
     void WithGenre()
     {
-        
+        Genre genre = Validate("Enter a Genre to filter by: ", x => ValidString(x, InputLogic.IsValidGenre));
+        IEnumerable<Song> songs = _access.GetByGenre(genre);
+        PrintDetails(songs);
     }
     void FromComposer()
     {
-        
+        string name = Validate("Enter the name of a Composer: ", x => ValidString(x, _access.IsInDatabase))!;
+        Composer? comp = _access.GetByID(name);
+        if (comp is null) { PrintDetails<Song>(null); return; }
+        PrintDetails(comp.Songs);
     }
 }

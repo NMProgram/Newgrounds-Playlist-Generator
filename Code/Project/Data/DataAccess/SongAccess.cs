@@ -22,8 +22,8 @@ public class SongAccess : Accessor
     {
         string sql = @"
         SELECT c.* FROM Song AS s 
-        LEFT JOIN SongComposer AS sc ON sc.songID = s.id
-        LEFT JOIN Composer AS c ON sc.composerID = c.id
+        JOIN SongComposer AS sc ON sc.songID = s.id
+        JOIN Composer AS c ON sc.composerID = c.id
         WHERE sc.songID = @ID
         ";
         IEnumerable<Song> songs = QueryAll<Song>(SongSQL + filter, DP);

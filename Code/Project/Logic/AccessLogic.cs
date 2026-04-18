@@ -65,7 +65,7 @@ public class AccessLogic
         _ => throw new ArgumentException($"Invalid ID type \'{typeof(TKey)}\'.", nameof(value))
     };
     public Song? GetClosestMatch(long id) => _sAccess.GetByClosestID(id);
-    public IEnumerable<Song> GetMatches(string search) 
+    public IEnumerable<Song> GetSongMatches(string search) 
         => _sAccess.GetMatchResults(search);
     public IEnumerable<Song> GetBetweenLevelIDs(long low, long high)
         => _sAccess.GetBetweenLevelIDs(low, high);
@@ -78,6 +78,20 @@ public class AccessLogic
     public IEnumerable<Song> GetByGenre(Genre genre) => _sAccess.GetByGenre(genre);
     public IEnumerable<Song>? GetSongsFromComposer(string name) => GetByID(name)?.Songs;
     public IEnumerable<Song> GetUnavailableSongs() => _sAccess.GetUnavailable();
+    public IEnumerable<Composer> GetComposerMatches(string search) 
+        => _cAccess.GetMatchResults($"%{search}%");
+    public IEnumerable<Composer> GetBetweenCompData(string first, string last)
+        => _cAccess.GetBetweenData(first, last);
+    public IEnumerable<Composer> GetBetweenCompData(DateTime first, DateTime last)
+        => _cAccess.GetBetweenData(first, last);
+    public IEnumerable<Composer> GetBetweenCompData(long first, long last)
+        => _cAccess.GetBetweenData(first, last);
+    public IEnumerable<Composer> GetUnavailableComposers() 
+        => _cAccess.GetUnavailable();
+    public IEnumerable<Composer> GetBySongID(long id) 
+        => _cAccess.GetComposersWithSong(id);
+    public IEnumerable<Composer> GetBySongName(string name) 
+        => _cAccess.GetComposersWithSong($"%{name}%");
     public (bool InDatabase, long, string?) IsInDatabase(long id)
     {
         return _sAccess.GetByID(id) is not null ? (true, id, null) : (false, -1, $"{id} was not found in the database.");

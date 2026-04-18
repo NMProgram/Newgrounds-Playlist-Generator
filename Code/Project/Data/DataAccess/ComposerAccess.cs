@@ -4,8 +4,8 @@ public class ComposerAccess : Accessor
 {
     const string CompSQL = @"
     SELECT c.* FROM Composer AS c
-    JOIN SongComposer AS sc ON sc.composerID = c.id
-    JOIN Song AS s ON sc.songID = s.id ";
+    LEFT JOIN SongComposer AS sc ON sc.composerID = c.id
+    LEFT JOIN Song AS s ON sc.songID = s.id ";
     public ComposerAccess(IConnection con) : base("Composer", con)
     {
         ExecuteSQL(@"CREATE TABLE IF NOT EXISTS Composer (
@@ -17,7 +17,7 @@ public class ComposerAccess : Accessor
         onNewgrounds INTEGER NOT NULL
         );");
     }
-    public IEnumerable<Composer>? GetComposers(string filter, object? DP = null)
+    public IEnumerable<Composer> GetComposers(string filter, object? DP = null)
     {
         string sql = @"
         SELECT s.* FROM Composer AS c
@@ -58,6 +58,25 @@ public class ComposerAccess : Accessor
         ExecuteSQL(sql, composer);
         ExecuteSQL(reset);
     }
-    public void Delete(long id) => Delete(new Composer(id, "", "2000-10-10 10:00:00", 0, "", 1));
+    public void Delete(long id) 
+        => Delete(new Composer(id, "", "2000-10-10 10:00:00", 0, "", 1));
     public Composer? GetByName(string name) => GetFirst("WHERE c.name = @Name", new { Name = name });
+    public IEnumerable<Composer> GetMatchResults(string search) 
+        => GetComposers("WHERE c.name LIKE @Search OR c.joinDate LIKE @Search ORDER BY c.name", 
+        new {Search = search});
+    public IEnumerable<Composer> GetBetweenData(string first, string last)
+        => GetComposers("WHERE LOWER(c.name) BETWEEN @First AND @Last ORDER BY c.name", 
+        new {First = first, Last = last});
+    public IEnumerable<Composer> GetBetweenData(DateTime first, DateTime last)
+        => GetComposers("WHERE c.joinDate BETWEEN @First AND @Last ORDER BY c.joinDate", 
+        new {First = first, Last = last});
+    public IEnumerable<Composer> GetBetweenData(long first, long last)
+        => GetComposers("WHERE (@Today - c.birthYear) BETWEEN @First AND @Last ORDER BY c.birthYear", 
+        new {Today = DateTime.Today.Year, First = first, Last = last});
+    public IEnumerable<Composer> GetUnavailable() 
+        => GetComposers("WHERE c.onNewgrounds = 0");
+    public IEnumerable<Composer> GetComposersWithSong(long id)
+        => GetComposers("WHERE s.id = @ID ORDER BY c.name", new { ID = id });
+    public IEnumerable<Composer> GetComposersWithSong(string name)
+        => GetComposers("WHERE s.name LIKE @Name ORDER BY c.name", new { Name = name });
 }

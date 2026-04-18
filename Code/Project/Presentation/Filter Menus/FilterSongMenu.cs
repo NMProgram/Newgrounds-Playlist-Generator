@@ -48,8 +48,8 @@ public class FilterSongMenu : FilterMenu
     }
     void Match()
     {
-        string search = Input("Enter a search term: ");
-        IEnumerable<Song> songs = _access.GetMatches(search);
+        string search = Input("Enter a search term to filter by: ");
+        IEnumerable<Song> songs = _access.GetSongMatches(search);
         PrintDetails(songs);
     }
     void BetweenIDs()

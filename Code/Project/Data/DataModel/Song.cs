@@ -114,6 +114,6 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     {
         _ = PlayAsync();
         return string.Join('\n', GetID(), GetName(), GetReleaseDate(), 
-        GetGenre(), GetLevelID(), GetAvailable(), GetComposers());
+        GetGenre(), GetLevelID(), GetAvailable(), GetComposers()).Bold();
     }
 }

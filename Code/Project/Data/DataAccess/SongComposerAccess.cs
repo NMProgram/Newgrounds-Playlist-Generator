@@ -5,8 +5,8 @@ public class SongComposerAccess : Accessor
     public SongComposerAccess(IConnection con) : base("SongComposer", con)
     {
         ExecuteSQL(@"CREATE TABLE IF NOT EXISTS SongComposer (
-        songID INTEGER NOT NULL,
-        composerID INTEGER NOT NULL,
+        songID INTEGER NOT NULL REFERENCES Song(id),
+        composerID INTEGER NOT NULL REFERENCES Composer(id),
         PRIMARY KEY(songID, composerID)
         );");
     }

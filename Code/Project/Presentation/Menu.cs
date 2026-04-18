@@ -1,9 +1,11 @@
+using System.Reflection;
 using System.Threading.Channels;
 
 public abstract class Menu
 {
     protected bool _active = true;
-    protected AccessLogic _access = new(new InFile());
+    protected SongLogic _sLogic = new(new InFile());
+    protected ComposerLogic _cLogic = new(new InFile());
     protected abstract string MenuStr { get; }
     protected abstract Action GetAction(char inp);
     protected static char InputKey(string msg)
@@ -16,12 +18,25 @@ public abstract class Menu
         Console.Write(msg);
         return Console.ReadLine() ?? "";
     }
+    void Exit()
+    {
+        Console.Clear();
+        Console.WriteLine("Successfully exited back to the last Menu!");
+        AskEnter();
+        Console.Clear();
+    }
+    protected void CheckActivity(Action action)
+    {
+        try { action(); }
+        catch (ReturnedException) { Exit(); }
+    }
     static string Clean(string str) => str.Replace("\r\n", "").Trim().Replace("    ", "\n");
     protected T Validate<T>(string msg, params Func<string, (bool, T, string?)>[] funcs)
     {
         while (true)
         {
             string inp = Input(msg);
+            if (inp == "\\") { throw new ReturnedException(); }
             for (int i = 0; i < funcs.Length; i++)
             {
                 var (res, val, err) = funcs[i](inp);
@@ -29,6 +44,11 @@ public abstract class Menu
                 else if (i == funcs.Length - 1) { return val; }
             }
         }
+    }
+    protected void AskEnter()
+    {
+        InputKey("\nPress any key to continue: ");
+        Console.Clear();
     }
     public void Start()
     {

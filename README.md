@@ -1,4 +1,4 @@
-# Newgrounds-Playlist-Generator
+# About This Repository
 This repository holds a console-based application that allows for the adding, removing and playing of all kinds of popular Newgrounds songs, as well as giving you the option to add ones of your own! Songs can also be filtered, updated and searched for using the terminal's Menu structure.
 
 # Menu Structure

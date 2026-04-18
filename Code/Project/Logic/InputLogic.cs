@@ -14,6 +14,11 @@ public static class InputLogic
     ];
     public static (bool, string, string?) IsNotEmpty(string str)
         => !string.IsNullOrEmpty(str) ? (true, str, null) : (false, "", "Please enter at least one character.");
+    public static (bool, T, string?) IsInOptions<T>(T val, T[] options)
+    {
+        string err = $"{val} is not between {options.Min()} and {options.Max()}.";
+        return options.Contains(val) ? (true, val, null) : (false, default!, err);
+    }
     public static (bool, int, string?) IsValidInteger(string val)
     {
         return int.TryParse(val, out int res) && (res >= 0 || res == -1) ?
@@ -50,7 +55,7 @@ public static class InputLogic
         { return (true, Genre.RNB, null); }
         return Enum.TryParse(newGenre, true, out Genre res) ? (true, res, null) : (false, default, err);
     }
-    public static (bool, int, string?) IsValidAvailability(string available) => available switch
+    public static (bool, int, string?) IsValidAvailability(string available) => available.ToLower() switch
     {
         "yes" or "true" or "1" => (true, 1, null),
         "no" or "false" or "0" => (true, 0, null),

@@ -18,12 +18,12 @@ public class SongAccess : Accessor
         audio BLOB NOT NULL
         );");
     }
-    public IEnumerable<Song>? GetSongs(string filter, object? DP = null)
+    public IEnumerable<Song> GetSongs(string filter, object? DP = null)
     {
         string sql = @"
         SELECT c.* FROM Song AS s 
-        LEFT JOIN SongComposer AS sc ON sc.songID = s.id
-        LEFT JOIN Composer AS c ON sc.composerID = c.id
+        JOIN SongComposer AS sc ON sc.songID = s.id
+        JOIN Composer AS c ON sc.composerID = c.id
         WHERE sc.songID = @ID
         ";
         IEnumerable<Song> songs = QueryAll<Song>(SongSQL + filter, DP);
@@ -58,11 +58,32 @@ public class SongAccess : Accessor
         ExecuteSQL(sql, song);
     }
     public Song? GetByID(long id)
-    {
-        return GetFirst("WHERE s.id = @ID", new { ID = id });
-    }
+        => GetFirst("WHERE s.id = @ID", new { ID = id });
     public Song? GetByLevelID(long levelID)
-    {
-        return GetFirst("WHERE s.levelID = @LevelID", new { LevelID = levelID });
-    }
+        => GetFirst("WHERE s.levelID = @LevelID", new { LevelID = levelID });
+    public Song? GetByClosestID(long id)
+        => GetFirst("ORDER BY ABS(s.id - @ID)", new { ID = id });
+    public IEnumerable<Song> GetMatchResults(string search) 
+        => GetSongs(@"WHERE s.id LIKE @Search OR s.name LIKE @Search OR 
+        s.genre LIKE @Search OR s.releaseDate LIKE @Search OR c.name LIKE @Search 
+        OR c.joinDate LIKE @Search OR c.description LIKE @Search", 
+        new {Search = $"%{search}%"});
+    public IEnumerable<Song> GetBetweenLevelIDs(long first, long last)
+        => GetSongs("WHERE s.levelID BETWEEN @First AND @Last ORDER BY s.levelID", 
+        new {First = first, Last = last});
+    public IEnumerable<Song> GetBetweenData(long first, long last)
+        => GetSongs("WHERE s.id BETWEEN @First AND @Last ORDER BY s.id", 
+        new {First = first, Last = last});
+    public IEnumerable<Song> GetBetweenData(string first, string last)
+        => GetSongs("WHERE LOWER(s.name) BETWEEN @First AND @Last ORDER BY s.name",
+        new {First = first, Last = last});
+    public IEnumerable<Song> GetBetweenData(DateTime first, DateTime last)
+        => GetSongs("WHERE s.releaseDate BETWEEN @First AND @Last ORDER BY s.releaseDate", 
+        new {First = first, Last = last});
+    public IEnumerable<Song> GetByGenre(Genre genre)
+        => GetSongs("WHERE s.genre = @Genre", new { Genre = genre });
+    public IEnumerable<Song> GetUnavailable() 
+        => GetSongs("WHERE s.available = 0 ORDER BY s.id");
+    public IEnumerable<Song> GetByComposer(string name) 
+        => GetSongs("WHERE c.name LIKE @Name", new { Name = name });
 }

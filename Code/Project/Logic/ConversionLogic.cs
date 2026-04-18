@@ -1,3 +1,5 @@
+using System.Numerics;
+
 public static class ConversionLogic
 {
     public static bool VerifyMP3(string path)
@@ -32,4 +34,6 @@ public static class ConversionLogic
         if (newStr.Contains("Hip Hop")) { newStr = newStr.Insert(7, " -"); }
         return newStr;
     }
+    public static T[] CreateNumArr<T>(T min, T max, T step) where T : INumber<T>
+        => [.. Enumerable.Sequence(min, max, step)];
 }

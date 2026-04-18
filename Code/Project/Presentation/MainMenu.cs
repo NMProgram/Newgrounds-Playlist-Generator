@@ -23,4 +23,8 @@ public class MainMenu : Menu
         (bool res, _, string? err) = InputLogic.IsNotEmpty(inp);
         return res ? func(inp) : (res, default(T), err);
     }
+    public (bool, long, string?) CheckID(string inp, Func<long, (bool, long, string?)> func)
+    {
+        return ValidString(inp, x => ValidID(x, func));
+    }
 }

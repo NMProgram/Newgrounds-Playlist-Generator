@@ -12,10 +12,6 @@ public class AlterMenu : MainMenu
         '2' => new AlterCompMenu().Start,
         _ => () => _active = false
     };
-    public (bool, long, string?) CheckID(string inp, Func<long, (bool, long, string?)> func)
-    {
-        return ValidString(inp, x => ValidID(x, func));
-    }
     protected void UpdateData<TKey, TEntity, TValue>(
         string type, string prompt, 
         Func<string, (bool, TKey, string?)> validator, Action<TEntity> action, Func<TEntity, TValue> getter

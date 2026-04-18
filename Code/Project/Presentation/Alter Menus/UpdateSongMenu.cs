@@ -16,24 +16,20 @@ public class UpdateSongMenu : AlterSongMenu
     ";
     protected override Action GetAction(char inp) => inp switch
     {
-        '1' => ID,
-        '2' => Name,
-        '3' => Date,
-        '4' => Genre,
-        '5' => LevelID,
-        '6' => Available,
-        '7' => AudioFile,
+        '1' => () => CheckActivity(ID),
+        '2' => () => CheckActivity(Name),
+        '3' => () => CheckActivity(Date),
+        '4' => () => CheckActivity(Genre),
+        '5' => () => CheckActivity(LevelID),
+        '6' => () => CheckActivity(Available),
+        '7' => () => CheckActivity(AudioFile),
         _ => () => _active = false
     };
     void UpdateData<T>(string type, Action<Song> action, Func<Song, T> getter)
     {
         UpdateData(type, _prompts[0], x => CheckID(x, _access.IsInDatabase), action, getter);
+        AskEnter();
     }
-    // will be used for Composer part
-    // void UpdateData<T>(string type, Action<Composer> action, Func<Composer, T> getter)
-    // {
-    //     UpdateData(type, InputLogic.IsNotEmpty, action, getter);
-    // }
     void ID()
     {
         UpdateData("ID", newSong => newSong.SetID(GetID(_access.IsNotInDatabase, true)), any => any.ID);

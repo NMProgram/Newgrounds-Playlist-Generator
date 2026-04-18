@@ -18,9 +18,9 @@ public class AlterCompMenu : AlterMenu
     ";
     protected override Action GetAction(char inp) => inp switch
     {
-        '1' => Add,
+        '1' => () => CheckActivity(Add),
         '2' => new UpdateCompMenu().Start,
-        '3' => Delete,
+        '3' => () => CheckActivity(Delete),
         _ => () => _active = false
     };
     protected string NamedPrompt(int index)
@@ -52,13 +52,14 @@ public class AlterCompMenu : AlterMenu
                 )
             )
         )!;
+    long GetBirthYear(long age) => age == -1 ? age : DateTime.Today.Year - age;
     Composer GetCompDetails()
     {
         string name = GetName(_access.IsNotInDatabase);
         _name = name;
         DateTime joinDate = GetJoinDate();
         Composer comp = new(1, name, joinDate.ToString("yyyy-MM-dd HH:mm:ss"), 
-        GetAge(joinDate.Year), GetDescription(), GetAvailability());
+        GetBirthYear(GetAge(joinDate.Year)), GetDescription(), GetAvailability());
         comp.AddSong(GetSong());
         return comp;
     }
@@ -67,6 +68,7 @@ public class AlterCompMenu : AlterMenu
         Composer comp = GetCompDetails();
         _access.AddComposer(comp);
         Console.WriteLine($"Successfully added the following Composer Details:\n\n{comp}");
+        AskEnter();
     }
     void Delete()
     {
@@ -75,5 +77,6 @@ public class AlterCompMenu : AlterMenu
         string inp = Input($"Are you sure you want to delete the composer \'{comp.Name}\'?\nEnter your choice here: ");
         if (!inp.ToLower().StartsWith('y')) { Console.WriteLine($"Cancelled deletion of \'{comp.Name}\'."); return; }
         Console.WriteLine($"Successfully deleted the following Song Details:\n\n{comp}");
+        AskEnter();
     }
 }

@@ -16,8 +16,8 @@ public class AccessLogic
         _sAccess.Insert(song);
         foreach (var comp in song.Composers)
         {
-            long id = _cAccess.Insert(comp);
-            _scAccess.Insert(new(song.ID, id));
+            _cAccess.Insert(comp);
+            _scAccess.Insert(new(song.ID, comp.ID));
         }
     }
     public void AddComposer(Composer comp)
@@ -64,6 +64,20 @@ public class AccessLogic
         string c => GetByID(c),
         _ => throw new ArgumentException($"Invalid ID type \'{typeof(TKey)}\'.", nameof(value))
     };
+    public Song? GetClosestMatch(long id) => _sAccess.GetByClosestID(id);
+    public IEnumerable<Song> GetMatches(string search) 
+        => _sAccess.GetMatchResults(search);
+    public IEnumerable<Song> GetBetweenLevelIDs(long low, long high)
+        => _sAccess.GetBetweenLevelIDs(low, high);
+    public IEnumerable<Song> GetBetweenSongData(long low, long high)
+        => _sAccess.GetBetweenData(low, high);
+    public IEnumerable<Song> GetBetweenSongData(string first, string last)
+        => _sAccess.GetBetweenData(first, last);
+    public IEnumerable<Song> GetBetweenSongData(DateTime first, DateTime last)
+        => _sAccess.GetBetweenData(first, last);
+    public IEnumerable<Song> GetByGenre(Genre genre) => _sAccess.GetByGenre(genre);
+    public IEnumerable<Song>? GetSongsFromComposer(string name) => GetByID(name)?.Songs;
+    public IEnumerable<Song> GetUnavailableSongs() => _sAccess.GetUnavailable();
     public (bool InDatabase, long, string?) IsInDatabase(long id)
     {
         return _sAccess.GetByID(id) is not null ? (true, id, null) : (false, -1, $"{id} was not found in the database.");
@@ -82,7 +96,7 @@ public class AccessLogic
     }
     public (bool, long, string?) IsUniqueLevelID(long id)
     {
-        return _sAccess.GetByLevelID(id) is not null ? (true, id, null) : (false, -1, $"Level ID {id} has already been used.");
+        return _sAccess.GetByLevelID(id) is null ? (true, id, null) : (false, -1, $"Level ID {id} has already been used.");
     }
     public (bool, long, string?) IsNewSong(string name, long id)
     {
@@ -98,6 +112,5 @@ public class AccessLogic
     {
         return !IsNewSong(name, id).Item1 ? 
         (true, id, null) : (false, -1, $"\'{name}\' doesn't have a Song with ID \'{id}\'.");
-
     }
 }

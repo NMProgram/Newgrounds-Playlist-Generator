@@ -17,9 +17,9 @@ public class AlterSongMenu : AlterMenu
     ";
     protected override Action GetAction(char inp) => inp switch
     {
-        '1' => Add,
+        '1' => () => CheckActivity(Add),
         '2' => new UpdateSongMenu().Start,
-        '3' => Delete,
+        '3' => () => CheckActivity(Delete),
         _ => () => _active = false
     };
     
@@ -33,7 +33,7 @@ public class AlterSongMenu : AlterMenu
     protected byte GetAvailability() 
         => (byte) Validate(_prompts[5], x => ValidString(x, InputLogic.IsValidAvailability));
     protected byte[] GetAudioFile() => Validate(_prompts[6], x => ValidString(x, InputLogic.IsValidMP3)) ?? [];
-    void Add()
+    public void Add()
     {
         Song song = new(
             GetID(_access.IsNotInDatabase), GetName(), GetReleaseDate(), (int)GetGenre(), 
@@ -41,6 +41,7 @@ public class AlterSongMenu : AlterMenu
         );
         _access.AddSong(song);
         Console.WriteLine($"Successfully added the following Song Details:\n\n{song}");
+        AskEnter();
     }
     void Delete()
     {
@@ -49,5 +50,6 @@ public class AlterSongMenu : AlterMenu
         string inp = Input($"Are you sure you want to delete the song \'{song.Name}\'?\nEnter your choice here: ");
         if (!inp.ToLower().StartsWith('y')) { Console.WriteLine($"Cancelled deletion of \'{song.Name}\'."); return; }
         Console.WriteLine($"Successfully deleted the following Song Details:\n\n{song}");
+        AskEnter();
     }
 }

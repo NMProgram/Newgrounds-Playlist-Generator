@@ -34,12 +34,13 @@ public class ComposerAccess : Accessor
         return composers;
     }
     public Composer? GetFirst(string filter, object? DP = null) => GetComposers(filter, DP)?.FirstOrDefault();
-    public long Insert(Composer composer)
+    public void Insert(Composer composer)
     {
-        string sql = @$"INSERT INTO {Table} (name, joinDate, birthYear, description, onNewgrounds)
-        VALUES (@Name, @JoinDate, @BirthYear, @Description, @OnNewgrounds);
-        SELECT LAST_INSERT_ROWID();";
-        return QueryScalar<long>(sql, composer);
+        long id = QueryScalar<long>($"SELECT MAX(id) FROM {Table}");
+        composer.SetID(id + 1);
+        string sql = @$"INSERT INTO {Table}
+        VALUES (@ID, @Name, @JoinDate, @BirthYear, @Description, @OnNewgrounds)";
+        QueryScalar<long>(sql, composer);
     }
     public void Update(Composer composer, string oldName)
     {

@@ -14,6 +14,11 @@ public static class InputLogic
     ];
     public static (bool, string, string?) IsNotEmpty(string str)
         => !string.IsNullOrEmpty(str) ? (true, str, null) : (false, "", "Please enter at least one character.");
+    public static (bool, T, string?) IsInOptions<T>(T val, T[] options)
+    {
+        string err = $"{val} is not between {options.Min()} and {options.Max()}.";
+        return options.Contains(val) ? (true, val, null) : (false, default!, err);
+    }
     public static (bool, int, string?) IsValidInteger(string val)
     {
         return int.TryParse(val, out int res) && (res >= 0 || res == -1) ?

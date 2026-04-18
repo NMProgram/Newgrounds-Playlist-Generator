@@ -1,4 +1,4 @@
-public class FilterCompMenu : Menu
+public class FilterCompMenu : FilterMenu
 {
     protected override string MenuStr => @"
     [1] Composers Between Names
@@ -9,12 +9,16 @@ public class FilterCompMenu : Menu
     ";
     protected override Action GetAction(char inp) => inp switch
     {
-        '1' => BetweenNames,
-        '2' => BetweenDates,
-        '3' => BetweenAges,
-        '4' => OnNewgrounds,
+        '1' => () => CheckActivity(BetweenNames),
+        '2' => () => CheckActivity(BetweenDates),
+        '3' => () => CheckActivity(BetweenAges),
+        '4' => () => CheckActivity(OnNewgrounds),
         _ => () => _active = false
     };
+    void PrintDetails(IEnumerable<Composer> comps)
+    {
+        PrintDetails([..comps], comp => $"\'{comp.Name}\' (Total Songs: {comp.Songs.Count})");
+    }
     void BetweenNames()
     {
         

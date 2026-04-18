@@ -52,13 +52,14 @@ public class AlterCompMenu : AlterMenu
                 )
             )
         )!;
+    long GetBirthYear(long age) => age == -1 ? age : DateTime.Today.Year - age;
     Composer GetCompDetails()
     {
         string name = GetName(_access.IsNotInDatabase);
         _name = name;
         DateTime joinDate = GetJoinDate();
         Composer comp = new(1, name, joinDate.ToString("yyyy-MM-dd HH:mm:ss"), 
-        GetAge(joinDate.Year), GetDescription(), GetAvailability());
+        GetBirthYear(GetAge(joinDate.Year)), GetDescription(), GetAvailability());
         comp.AddSong(GetSong());
         return comp;
     }

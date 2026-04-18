@@ -22,9 +22,9 @@ public class AccessLogic
     }
     public void AddComposer(Composer comp)
     {
-        _cAccess.Insert(comp);
+        long id = _cAccess.Insert(comp);
         foreach (var song in comp.Songs)
-        { _scAccess.Insert(new(song.ID, comp.ID)); }
+        { _scAccess.Insert(new(song.ID, id)); }
     }
     public void Update(Song oldSong, Song newSong)
     {

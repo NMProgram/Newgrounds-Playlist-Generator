@@ -4,7 +4,8 @@ using System.Threading.Channels;
 public abstract class Menu
 {
     protected bool _active = true;
-    protected AccessLogic _access = new(new InFile());
+    protected SongLogic _sLogic = new(new InFile());
+    protected ComposerLogic _cLogic = new(new InFile());
     protected abstract string MenuStr { get; }
     protected abstract Action GetAction(char inp);
     protected static char InputKey(string msg)

@@ -44,18 +44,18 @@ public class AlterCompMenu : AlterMenu
     protected byte GetAvailability() 
         => (byte) Validate(NamedPrompt(4), x => ValidString(x, InputLogic.IsValidAvailability));
     protected Song GetSong() 
-        => _access.GetByID(
+        => _sLogic.GetByID(
             Validate(
                 NamedPrompt(5), 
                 x => ValidString(
-                    x, y => CheckID(y, _access.IsInDatabase)
+                    x, y => CheckID(y, _sLogic.IsInDatabase)
                 )
             )
         )!;
     long GetBirthYear(long age) => age == -1 ? age : DateTime.Today.Year - age;
     Composer GetCompDetails()
     {
-        string name = GetName(_access.IsNotInDatabase);
+        string name = GetName(_cLogic.IsNotInDatabase);
         _name = name;
         DateTime joinDate = GetJoinDate();
         Composer comp = new(1, name, joinDate.ToString("yyyy-MM-dd HH:mm:ss"), 
@@ -66,14 +66,14 @@ public class AlterCompMenu : AlterMenu
     void Add()
     {
         Composer comp = GetCompDetails();
-        _access.AddComposer(comp);
+        _cLogic.Add(comp);
         Console.WriteLine($"Successfully added the following Composer Details:\n\n{comp}");
         AskEnter();
     }
     void Delete()
     {
-        string oldName = Validate(_prompts[0], InputLogic.IsNotEmpty, _access.IsInDatabase);
-        Composer comp = _access.GetByID(oldName)!;
+        string oldName = Validate(_prompts[0], InputLogic.IsNotEmpty, _cLogic.IsInDatabase);
+        Composer comp = _cLogic.GetByID(oldName)!;
         string inp = Input($"Are you sure you want to delete the composer \'{comp.Name}\'?\nEnter your choice here: ");
         if (!inp.ToLower().StartsWith('y')) { Console.WriteLine($"Cancelled deletion of \'{comp.Name}\'."); return; }
         Console.WriteLine($"Successfully deleted the following Song Details:\n\n{comp}");

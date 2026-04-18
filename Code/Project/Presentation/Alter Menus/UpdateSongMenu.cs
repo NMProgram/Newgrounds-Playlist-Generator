@@ -27,12 +27,12 @@ public class UpdateSongMenu : AlterSongMenu
     };
     void UpdateData<T>(string type, Action<Song> action, Func<Song, T> getter)
     {
-        UpdateData(type, _prompts[0], x => CheckID(x, _access.IsInDatabase), action, getter);
+        UpdateData(type, _prompts[0], x => CheckID(x, _sLogic.IsInDatabase), action, getter);
         AskEnter();
     }
     void ID()
     {
-        UpdateData("ID", newSong => newSong.SetID(GetID(_access.IsNotInDatabase, true)), any => any.ID);
+        UpdateData("ID", newSong => newSong.SetID(GetID(_sLogic.IsNotInDatabase, true)), any => any.ID);
     }
     void Name()
     {

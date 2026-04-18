@@ -82,5 +82,8 @@ public class SongAccess : Accessor
         new {First = first, Last = last});
     public IEnumerable<Song> GetByGenre(Genre genre)
         => GetSongs("WHERE s.genre = @Genre", new { Genre = genre });
-    public IEnumerable<Song> GetUnavailable() => GetSongs("WHERE s.available = 0 ORDER BY s.id");
+    public IEnumerable<Song> GetUnavailable() 
+        => GetSongs("WHERE s.available = 0 ORDER BY s.id");
+    public IEnumerable<Song> GetByComposer(string name) 
+        => GetSongs("WHERE c.name LIKE @Name", new { Name = name });
 }

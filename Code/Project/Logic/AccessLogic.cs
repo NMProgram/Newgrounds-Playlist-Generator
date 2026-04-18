@@ -64,6 +64,9 @@ public class AccessLogic
         string c => GetByID(c),
         _ => throw new ArgumentException($"Invalid ID type \'{typeof(TKey)}\'.", nameof(value))
     };
+    public Song? GetClosestMatch(long id) => _sAccess.GetByClosestID(id);
+    public IEnumerable<Song> GetMatches(string search) 
+        => _sAccess.GetMatchResults(search);
     public (bool InDatabase, long, string?) IsInDatabase(long id)
     {
         return _sAccess.GetByID(id) is not null ? (true, id, null) : (false, -1, $"{id} was not found in the database.");
@@ -98,6 +101,5 @@ public class AccessLogic
     {
         return !IsNewSong(name, id).Item1 ? 
         (true, id, null) : (false, -1, $"\'{name}\' doesn't have a Song with ID \'{id}\'.");
-
     }
 }

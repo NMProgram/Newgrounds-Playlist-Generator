@@ -58,11 +58,14 @@ public class SongAccess : Accessor
         ExecuteSQL(sql, song);
     }
     public Song? GetByID(long id)
-    {
-        return GetFirst("WHERE s.id = @ID", new { ID = id });
-    }
+        => GetFirst("WHERE s.id = @ID", new { ID = id });
     public Song? GetByLevelID(long levelID)
-    {
-        return GetFirst("WHERE s.levelID = @LevelID", new { LevelID = levelID });
-    }
+        => GetFirst("WHERE s.levelID = @LevelID", new { LevelID = levelID });
+    public Song? GetByClosestID(long id)
+        => GetFirst("ORDER BY ABS(s.id - @ID)", new { ID = id });
+    public IEnumerable<Song> GetMatchResults(string search) 
+        => GetSongs(@"WHERE s.id LIKE @Search OR s.name LIKE @Search OR 
+        s.genre LIKE @Search OR s.releaseDate LIKE @Search OR c.name LIKE @Search 
+        OR c.joinDate LIKE @Search OR c.description LIKE @Search", 
+        new {Search = $"%{search}%"});
 }

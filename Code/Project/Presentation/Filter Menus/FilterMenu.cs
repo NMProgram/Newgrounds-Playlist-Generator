@@ -13,13 +13,18 @@ public class FilterMenu : MainMenu
     };
     protected void PrintDetails<T>(T? obj)
     {
+        Console.WriteLine("\nFound result:\n");
         string msg = obj is null ? "No results found." : obj.ToString()!;
         Console.WriteLine(msg);
         AskEnter();
     }
     protected void PrintDetails<T>(T[] objs, Func<T, string> getter)
     {
-        if (objs.Length == 0) { Console.WriteLine("No results found."); return; }
+        switch (objs.Length)
+        {
+            case 0: Console.WriteLine("No results found."); AskEnter(); return;
+            case 1: PrintDetails(objs[0]); return;
+        }
         Console.WriteLine($"Found {objs.Length} results:\n");
         for (int i = 0; i < objs.Length; i++)
         {
@@ -27,7 +32,7 @@ public class FilterMenu : MainMenu
             Console.WriteLine($"#{i + 1}: {getter(obj)}");
         }
         long[] list = ConversionLogic.CreateNumArr<long>(1, objs.Length, 1);
-        long option = Validate("Enter the number next to the entry you wish to check out: ", 
+        long option = Validate("\nEnter the number next to the entry you wish to check out: ", 
         x => ValidID(x, y => InputLogic.IsInOptions(y, list)));
         PrintDetails(objs[option - 1]);
     }

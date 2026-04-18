@@ -33,7 +33,7 @@ public class AlterMenu : Menu
     where TEntity : ICloneable, INamed
     {
         TKey oldValue = Validate(prompt.Insert(9, " old"), validator);
-        _name = oldValue.ToString();
+        _name = oldValue!.ToString()!;
         TEntity o = (TEntity)_access.GetByID(oldValue)!;
         TEntity n = (TEntity)o.Clone();
         action(n);

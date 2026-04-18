@@ -18,7 +18,7 @@ public class SongAccess : Accessor
         audio BLOB NOT NULL
         );");
     }
-    public IEnumerable<Song>? GetSongs(string filter, object? DP = null)
+    public IEnumerable<Song> GetSongs(string filter, object? DP = null)
     {
         string sql = @"
         SELECT c.* FROM Song AS s 

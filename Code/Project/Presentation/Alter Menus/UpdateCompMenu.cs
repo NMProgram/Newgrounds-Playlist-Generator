@@ -23,13 +23,14 @@ public class UpdateCompMenu : AlterCompMenu
     };
     (bool, long, string?) CheckSongIDs(string inp, string name, Func<string, long, (bool, long, string?)> func)
     {
-        var tuple = CheckID(inp, _access.IsInDatabase);
+        var tuple = CheckID(inp, _sLogic.IsInDatabase);
         if (!tuple.Item1) { return tuple; }
         return func(name, tuple.Item2);
     }
     int ReplaceSong(Composer comp)
     {
-        long oldID = Validate("Enter the old ID of the Song to replace: ", x => CheckSongIDs(x, comp.Name, _access.IsNotNewSong));
+        long oldID = Validate("Enter the old ID of the Song to replace: ", 
+        x => CheckSongIDs(x, comp.Name, _cLogic.IsNotNewSong));
         Song song = GetSong();
         int i = comp.UpdateSong(oldID, song);
         return i;
@@ -41,11 +42,12 @@ public class UpdateCompMenu : AlterCompMenu
     }
     void AddSong()
     {
-        string name = Validate(_prompts[0], InputLogic.IsNotEmpty, _access.IsInDatabase);
-        long id = Validate("Enter the ID of the Song to add: ", x => CheckSongIDs(x, name, _access.IsNewSong));
-        Song song = _access.GetByID(id)!;
-        Composer o = _access.GetByID(name)!; Composer n = (o.Clone() as Composer)!;
-        n.AddSong(song); _access.Update(o, n);
+        string name = Validate(_prompts[0], InputLogic.IsNotEmpty, _cLogic.IsInDatabase);
+        long id = Validate("Enter the ID of the Song to add: ", 
+        x => CheckSongIDs(x, name, _cLogic.IsNewSong));
+        Song song = _sLogic.GetByID(id)!;
+        Composer o = _cLogic.GetByID(name)!; Composer n = (o.Clone() as Composer)!;
+        n.AddSong(song); _cLogic.Update(o, n);
         Console.WriteLine($"Successfully added the following Song Details under the name \'{name}\':\n\n{song}");
     }
     void UpdateSong()

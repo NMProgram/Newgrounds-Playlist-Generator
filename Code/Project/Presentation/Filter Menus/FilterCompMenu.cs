@@ -28,33 +28,33 @@ public class FilterCompMenu : FilterMenu
     void Match()
     {
         string search = Validate("Enter a search term to filter by: ", InputLogic.IsNotEmpty);
-        IEnumerable<Composer> composers = _access.GetComposerMatches(search);
+        IEnumerable<Composer> composers = _cLogic.GetComposerMatches(search);
         PrintDetails(composers);
     }
     void BetweenNames()
     {
         string nameFirst = Validate("Enter the first name to search for: ", InputLogic.IsNotEmpty);
         string nameLast = Validate("Enter the last name to search for: ", InputLogic.IsNotEmpty);
-        IEnumerable<Composer> composers = _access.GetBetweenCompData(nameFirst, nameLast);
+        IEnumerable<Composer> composers = _cLogic.GetBetweenCompData(nameFirst, nameLast);
         PrintDetails(composers);
     }
     void BetweenDates()
     {
         DateTime start = Validate("Enter the starting Join Date: ", x => ValidString(x, InputLogic.IsValidDate));
         DateTime end = Validate("Enter the ending Join Date: ", x => ValidString(x, InputLogic.IsValidDate));
-        IEnumerable<Composer> composers = _access.GetBetweenCompData(start, end);
+        IEnumerable<Composer> composers = _cLogic.GetBetweenCompData(start, end);
         PrintDetails(composers);
     }
     void BetweenAges()
     {
         long startAge = Validate("Enter the starting Age: ", x => ValidString(x, InputLogic.IsValidInteger));
         long endAge = Validate("Enter the ending Age: ", x => ValidString(x, InputLogic.IsValidInteger));
-        IEnumerable<Composer> composers = _access.GetBetweenCompData(startAge, endAge);
+        IEnumerable<Composer> composers = _cLogic.GetBetweenCompData(startAge, endAge);
         PrintDetails(composers);
     }
     void Unavailable()
     {
-        IEnumerable<Composer> composers = _access.GetUnavailableComposers();
+        IEnumerable<Composer> composers = _cLogic.GetUnavailableComposers();
         PrintDetails(composers);
     }
     void WithSong<T>(Func<string, (bool, T, string?)> validator, Func<T, IEnumerable<Composer>> getter)
@@ -66,10 +66,10 @@ public class FilterCompMenu : FilterMenu
     }
     void WithSongID()
     {
-        WithSong<long>(x => ValidString(x, InputLogic.IsValidInteger)!, _access.GetBySongID);
+        WithSong<long>(x => ValidString(x, InputLogic.IsValidInteger)!, _cLogic.GetBySongID);
     }
     void WithSongName()
     {
-        WithSong(InputLogic.IsNotEmpty, _access.GetBySongName);
+        WithSong(InputLogic.IsNotEmpty, _cLogic.GetBySongName);
     }
 }

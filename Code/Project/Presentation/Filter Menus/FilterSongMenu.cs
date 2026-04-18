@@ -43,53 +43,52 @@ public class FilterSongMenu : FilterMenu
     void ClosestID()
     {
         long id = Validate("Enter an ID: ", InputLogic.IsValidInteger);
-        Song? song = _access.GetClosestMatch(id);
+        Song? song = _sLogic.GetClosestMatch(id);
         PrintDetails(song);
     }
     void Match()
     {
         string search = Input("Enter a search term to filter by: ");
-        IEnumerable<Song> songs = _access.GetSongMatches(search);
+        IEnumerable<Song> songs = _sLogic.GetSongMatches(search);
         PrintDetails(songs);
     }
     void BetweenIDs()
     {
-        IDChecker(_access.GetBetweenSongData);
+        IDChecker(_sLogic.GetBetweenSongData);
     }
     void BetweenLevelIDs()
     {
-        IDChecker(_access.GetBetweenLevelIDs, "Level");
+        IDChecker(_sLogic.GetBetweenLevelIDs, "Level");
     }
     void BetweenNames()
     {
         string first = Validate("Enter the first name: ", InputLogic.IsNotEmpty);
         string last = Validate("Enter the last name: ", InputLogic.IsNotEmpty);
-        IEnumerable<Song> songs = _access.GetBetweenSongData(first, last);
+        IEnumerable<Song> songs = _sLogic.GetBetweenSongData(first, last);
         PrintDetails(songs);
     }
     void BetweenDates()
     {
         DateTime first = Validate("Enter the starting date: ", x => ValidString(x, InputLogic.IsValidDate));
         DateTime last = Validate("Enter the ending date: ", x => ValidString(x, InputLogic.IsValidDate));
-        IEnumerable<Song> songs = _access.GetBetweenSongData(first, last);
+        IEnumerable<Song> songs = _sLogic.GetBetweenSongData(first, last);
         PrintDetails(songs);
     }
     void WithGenre()
     {
         Genre genre = Validate("Enter a Genre to filter by: ", x => ValidString(x, InputLogic.IsValidGenre));
-        IEnumerable<Song> songs = _access.GetByGenre(genre);
+        IEnumerable<Song> songs = _sLogic.GetByGenre(genre);
         PrintDetails(songs);
     }
     void UnavailableSongs()
     {
-        IEnumerable<Song> songs = _access.GetUnavailableSongs();
+        IEnumerable<Song> songs = _sLogic.GetUnavailableSongs();
         PrintDetails(songs);
     }
     void FromComposer()
     {
-        string name = Validate("Enter the name of a Composer: ", x => ValidString(x, _access.IsInDatabase))!;
-        Composer? comp = _access.GetByID(name);
-        if (comp is null) { PrintDetails<Song>(null); return; }
-        PrintDetails(comp.Songs);
+        string name = Validate("Enter the name of a Composer: ", x => ValidString(x, _cLogic.IsInDatabase))!;
+        IEnumerable<Song> songs = _sLogic.GetSongsFromComposer(name)!;
+        PrintDetails(songs);
     }
 }

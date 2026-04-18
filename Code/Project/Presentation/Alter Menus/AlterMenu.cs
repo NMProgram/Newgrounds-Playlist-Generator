@@ -20,10 +20,10 @@ public class AlterMenu : MainMenu
     {
         TKey oldValue = Validate(prompt.Insert(9, " old"), validator);
         _name = oldValue!.ToString()!;
-        TEntity o = (TEntity)_access.GetByID(oldValue)!;
+        TEntity o = (TEntity)_sLogic.GetByID(oldValue)!;
         TEntity n = (TEntity)o.Clone();
         action(n);
-        _access.Update(o, n);
+        _sLogic.Update(o, n);
         string msg = $"Successfully changed the {type} of the {typeof(TEntity)} {o.Name.Bold()} from \'{getter(o)}\' to \'{getter(n)}\'!";
         Console.WriteLine(msg);
     }

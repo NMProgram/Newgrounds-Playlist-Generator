@@ -67,6 +67,8 @@ public class AccessLogic
     public Song? GetClosestMatch(long id) => _sAccess.GetByClosestID(id);
     public IEnumerable<Song> GetMatches(string search) 
         => _sAccess.GetMatchResults(search);
+    public IEnumerable<Song> GetBetweenLevelIDs(long low, long high)
+        => _sAccess.GetBetweenLevelIDs(low, high);
     public IEnumerable<Song> GetBetweenSongData(long low, long high)
         => _sAccess.GetBetweenData(low, high);
     public IEnumerable<Song> GetBetweenSongData(string first, string last)
@@ -75,6 +77,7 @@ public class AccessLogic
         => _sAccess.GetBetweenData(first, last);
     public IEnumerable<Song> GetByGenre(Genre genre) => _sAccess.GetByGenre(genre);
     public IEnumerable<Song>? GetSongsFromComposer(string name) => GetByID(name)?.Songs;
+    public IEnumerable<Song> GetUnavailableSongs() => _sAccess.GetUnavailable();
     public (bool InDatabase, long, string?) IsInDatabase(long id)
     {
         return _sAccess.GetByID(id) is not null ? (true, id, null) : (false, -1, $"{id} was not found in the database.");

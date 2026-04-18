@@ -68,15 +68,19 @@ public class SongAccess : Accessor
         s.genre LIKE @Search OR s.releaseDate LIKE @Search OR c.name LIKE @Search 
         OR c.joinDate LIKE @Search OR c.description LIKE @Search", 
         new {Search = $"%{search}%"});
+    public IEnumerable<Song> GetBetweenLevelIDs(long first, long last)
+        => GetSongs("WHERE s.levelID BETWEEN @First AND @Last ORDER BY s.levelID", 
+        new {First = first, Last = last});
     public IEnumerable<Song> GetBetweenData(long first, long last)
         => GetSongs("WHERE s.id BETWEEN @First AND @Last ORDER BY s.id", 
         new {First = first, Last = last});
     public IEnumerable<Song> GetBetweenData(string first, string last)
-        => GetSongs("WHERE LOWER(s.name) BETWEEN @First AND @Last",
+        => GetSongs("WHERE LOWER(s.name) BETWEEN @First AND @Last ORDER BY s.name",
         new {First = first, Last = last});
     public IEnumerable<Song> GetBetweenData(DateTime first, DateTime last)
-        => GetSongs("WHERE s.releaseDate BETWEEN @First AND @Last", 
+        => GetSongs("WHERE s.releaseDate BETWEEN @First AND @Last ORDER BY s.releaseDate", 
         new {First = first, Last = last});
     public IEnumerable<Song> GetByGenre(Genre genre)
         => GetSongs("WHERE s.genre = @Genre", new { Genre = genre });
+    public IEnumerable<Song> GetUnavailable() => GetSongs("WHERE s.available = 0 ORDER BY s.id");
 }

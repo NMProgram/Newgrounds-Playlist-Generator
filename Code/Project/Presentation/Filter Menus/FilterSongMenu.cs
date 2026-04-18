@@ -7,10 +7,12 @@ public class FilterSongMenu : FilterMenu
     [1] Search Song with Closest ID
     [2] Search Song By Match
     [3] Songs Between IDs
-    [4] Songs Between Names
-    [5] Songs Between Dates
-    [6] Songs With Specific Genre
-    [7] Songs From Composer
+    [4] Songs Between Level IDs
+    [5] Songs Between Names
+    [6] Songs Between Dates
+    [7] Songs With Specific Genre
+    [8] View Unavailable Songs
+    [9] Songs From Composer
     [Q] Return to Filter Menu
     ";
     protected override Action GetAction(char inp) => inp switch
@@ -18,16 +20,25 @@ public class FilterSongMenu : FilterMenu
         '1' => ClosestID,
         '2' => Match,
         '3' => BetweenIDs,
-        '4' => BetweenNames,
-        '5' => BetweenDates,
-        '6' => WithGenre,
-        '7' => FromComposer,
+        '4' => BetweenLevelIDs,
+        '5' => BetweenNames,
+        '6' => BetweenDates,
+        '7' => WithGenre,
+        '8' => UnavailableSongs,
+        '9' => FromComposer,
         _ => () => _active = false
     };
-    
+    void IDChecker(Func<long, long, IEnumerable<Song>> selector, string prefix = "")
+    {
+        prefix = $" {prefix} ";
+        long lowID = Validate($"Enter the first{prefix}ID: ", x => ValidString(x, InputLogic.IsValidInteger));
+        long highID = Validate($"Enter the last{prefix}ID: ", x => ValidString(x, InputLogic.IsValidInteger));
+        IEnumerable<Song> songs = selector(lowID, highID);
+        PrintDetails(songs);
+    }
     void PrintDetails(IEnumerable<Song> songs)
     {
-        PrintDetails([..songs], song => $"\'{song.Name}\' (ID: {song.ID})");
+        PrintDetails([..songs.DistinctBy(x => x.ID)], song => $"\'{song.Name}\' (ID: {song.ID})");
     }
     void ClosestID()
     {
@@ -43,10 +54,11 @@ public class FilterSongMenu : FilterMenu
     }
     void BetweenIDs()
     {
-        long lowID = Validate("Enter the first ID: ", x => ValidString(x, InputLogic.IsValidInteger));
-        long highID = Validate("Enter the last ID: ", x => ValidString(x, InputLogic.IsValidInteger));
-        IEnumerable<Song> songs = _access.GetBetweenSongData(lowID, highID);
-        PrintDetails(songs);
+        IDChecker(_access.GetBetweenSongData);
+    }
+    void BetweenLevelIDs()
+    {
+        IDChecker(_access.GetBetweenLevelIDs, "Level");
     }
     void BetweenNames()
     {
@@ -66,6 +78,11 @@ public class FilterSongMenu : FilterMenu
     {
         Genre genre = Validate("Enter a Genre to filter by: ", x => ValidString(x, InputLogic.IsValidGenre));
         IEnumerable<Song> songs = _access.GetByGenre(genre);
+        PrintDetails(songs);
+    }
+    void UnavailableSongs()
+    {
+        IEnumerable<Song> songs = _access.GetUnavailableSongs();
         PrintDetails(songs);
     }
     void FromComposer()

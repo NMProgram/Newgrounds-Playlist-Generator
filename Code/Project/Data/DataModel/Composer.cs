@@ -40,11 +40,11 @@ public class Composer : IEquatable<Composer>, IComparable<Composer>, ICloneable,
     public int CompareTo(Composer? other)
     {
         if (other is null) { return 1; }
-        int id = ID.CompareTo(other.ID);
-        if (id != 0) { return id; }
         int name = Name.CompareTo(other.Name);
         if (name != 0) { return name; }
-        return Description.CompareTo(other.Description);
+        int desc = Description.CompareTo(other.Description);
+        if (desc != 0) { return desc; }
+        return Songs.Count.CompareTo(other.Songs.Count) * -1;
     }
     public bool Equals(Composer? other)
     {
@@ -59,7 +59,10 @@ public class Composer : IEquatable<Composer>, IComparable<Composer>, ICloneable,
     public void AddSong(Song? song)
     {
         if (song is not null && !Songs.Contains(song))
-        { Songs.Add(song); }
+        { 
+            Songs.Add(song); 
+            song.AddComposer(this);
+        }
         Songs.Sort();
     }
     public void AddSong(IEnumerable<Song> songs)
@@ -86,7 +89,12 @@ public class Composer : IEquatable<Composer>, IComparable<Composer>, ICloneable,
     string GetAgeStr() => $"Age: {GetAge()}";
     string GetDescription() => $"Description: {Description}";
     string GetAvailable() => $"On Newgrounds: {OnNewgrounds == 1}";
-    string GetSongs() => $"Songs: {string.Join(", ", Songs.Select(x => $"\'{x.Name}\'"))}";
+    string GetSongs() => Songs.Count switch
+    {
+        0 => "Songs: N/A",
+        1 => $"Song: \'{Songs[0].Name}\'",
+        _ => $"Songs: {string.Join(", ", Songs.Select(x => $"\'{x.Name}\'"))}",
+    };
     public override string ToString()
     {
         _ = Play();

@@ -24,7 +24,7 @@ public sealed class ComposerLogicTests : TestStartup
         Assert.AreEqual(newComp, foundComp);
         Assert.IsNull(notAnymore);
         // Act
-        _cAccess.Delete(newComp.ID);
+        _cAccess.Delete(newComp!.ID);
         Composer? notHere = _cAccess.GetByID("*");
         // Assert
         Assert.IsNull(notHere);

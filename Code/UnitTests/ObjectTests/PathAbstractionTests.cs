@@ -10,7 +10,7 @@ public sealed class PathAbstractionTests
     public void Constructor_PathAbstraction_HasProperties(string name, string fileName)
     {
         // Arrange
-        string dir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.FullName;
+        string dir = Directory.GetParent(AppContext.BaseDirectory)!.Parent!.Parent!.Parent!.FullName;
         string path = Path.Combine(dir, fileName);
         MemoryStream stream = new(File.ReadAllBytes(path));
         // Act
@@ -23,7 +23,7 @@ public sealed class PathAbstractionTests
     [TestMethod]
     public void CloseStream_PathAbstraction_ClosesReadAndWrite()
     {
-        string dir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.FullName;
+        string dir = Directory.GetParent(AppContext.BaseDirectory)!.Parent!.Parent!.Parent!.FullName;
         string path = Path.Combine(dir, "8762_newgrounds_brent_.mp3");
         MemoryStream ms = new(File.ReadAllBytes(path));
         PathAbstraction pa = new("Memory.mp3", ms);
@@ -36,7 +36,7 @@ public sealed class PathAbstractionTests
     public void AbstractMP3Path_PathAbstractionInTagLib_CreatesNewFile()
     {
         // Arrange
-        string dir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.FullName;
+        string dir = Directory.GetParent(AppContext.BaseDirectory)!.Parent!.Parent!.Parent!.FullName;
         string path = Path.Combine(dir, "8762_newgrounds_brent_.mp3");
         using MemoryStream ms = new(File.ReadAllBytes(path));
         // Act

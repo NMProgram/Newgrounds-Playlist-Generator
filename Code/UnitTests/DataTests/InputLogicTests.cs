@@ -253,7 +253,7 @@ public sealed class InputLogicTests
     public void IsValidMP3_InputLogic_Success(string path)
     {
         // ^^^ Arrange ^^^
-        string dir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.FullName;
+        string dir = Directory.GetParent(AppContext.BaseDirectory)!.Parent!.Parent!.Parent!.FullName;
         string pth = Path.Combine(dir, path);
         // Act
         var (res, val, err) = InputLogic.IsValidMP3(pth);

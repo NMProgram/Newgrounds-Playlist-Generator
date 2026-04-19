@@ -16,7 +16,7 @@ public sealed class SongTests
         Song s1 = new(id, name, releaseDate, genre, levelID, available, []);
         Composer c1 = new(1, "Fantomenk", "2008-10-26 00:00:00", -1, "", 1);
         Composer c2 = new(5, "KDrew", "2010-07-21 00:00:00", 1989, "KDrew music and videos", 0);
-        string dir = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.FullName;
+        string dir = Directory.GetParent(AppContext.BaseDirectory)!.Parent!.Parent!.Parent!.FullName;
         string path = Path.Combine(dir, "8762_newgrounds_brent_.mp3");
         // Act
         s1.SetAudio(File.ReadAllBytes(path));

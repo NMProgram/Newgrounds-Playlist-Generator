@@ -6,7 +6,7 @@ public interface IConnection
 public class InFile : IConnection
 {
     string dir = "Data/DataSource";
-    public string? GetConnection(string? fileName = null)
+    public string GetConnection(string? fileName = null)
     {
         fileName ??= "database.db";
         return "Data Source=" + Path.Combine(dir, fileName);
@@ -15,7 +15,7 @@ public class InFile : IConnection
 
 public class InMemory : IConnection
 {
-    public string? GetConnection(string? fileName = null)
+    public string GetConnection(string? fileName = null)
     {
         return $"Data Source=file:memorydb?mode=memory&cache=shared;";
     }

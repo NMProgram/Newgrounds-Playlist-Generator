@@ -36,7 +36,8 @@ public class SongLogic : AccessLogic
     public IEnumerable<Song> GetBetweenSongData(DateTime first, DateTime last)
         => _sAccess.GetBetweenData(first, last);
     public IEnumerable<Song> GetByGenre(Genre genre) => _sAccess.GetByGenre(genre);
-    public IEnumerable<Song> GetSongsFromComposer(string name) => _sAccess.GetByComposer(name);
+    public IEnumerable<Song> GetSongsFromComposer(string name) 
+        => _sAccess.GetByComposer(name);
     public IEnumerable<Song> GetUnavailableSongs() => _sAccess.GetUnavailable();
     public (bool InDatabase, long, string?) IsInDatabase(long id)
         => _sAccess.GetByID(id) is not null ? (true, id, null) : 

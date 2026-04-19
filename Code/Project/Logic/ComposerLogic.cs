@@ -18,6 +18,11 @@ public class ComposerLogic : AccessLogic
         _cAccess.Delete(comp);
         _scAccess.Delete(new SongComposer(-1, comp.ID));
     }
+    public void Delete(long id)
+    {
+        _cAccess.Delete(id);
+        _scAccess.Delete(new SongComposer(-1, id));
+    }
     public Composer? GetByID(string name) => _cAccess.GetByName(name);
     public IEnumerable<Composer> GetComposerMatches(string search) 
         => _cAccess.GetMatchResults($"%{search}%");

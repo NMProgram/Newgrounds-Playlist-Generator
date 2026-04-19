@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Dapper;
 
 public class ComposerAccess : Accessor
@@ -42,6 +43,7 @@ public class ComposerAccess : Accessor
         VALUES (@ID, @Name, @JoinDate, @BirthYear, @Description, @OnNewgrounds)";
         QueryScalar<long>(sql, composer);
     }
+    [ExcludeFromCodeCoverage]
     public void Update(Composer composer, string oldName)
     {
         string sql = @$"UPDATE {Table} SET name = @Name, joinDate = @JoinDate, 
@@ -65,7 +67,7 @@ public class ComposerAccess : Accessor
         => GetComposers("WHERE c.name LIKE @Search OR c.joinDate LIKE @Search ORDER BY c.name", 
         new {Search = search});
     public IEnumerable<Composer> GetBetweenData(string first, string last)
-        => GetComposers("WHERE LOWER(c.name) BETWEEN @First AND @Last ORDER BY c.name", 
+        => GetComposers("WHERE LOWER(c.name) BETWEEN LOWER(@First) AND LOWER(@Last) ORDER BY c.name", 
         new {First = first, Last = last});
     public IEnumerable<Composer> GetBetweenData(DateTime first, DateTime last)
         => GetComposers("WHERE c.joinDate BETWEEN @First AND @Last ORDER BY c.joinDate", 

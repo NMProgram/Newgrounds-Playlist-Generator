@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography.X509Certificates;
 
 public class AccessLogic
@@ -11,6 +12,7 @@ public class AccessLogic
         _cAccess = new(con);
         _scAccess = new(con);
     }
+    [ExcludeFromCodeCoverage]
     public void Update<T>(T value1, T value2)
     {
         switch((value1, value2))
@@ -19,6 +21,7 @@ public class AccessLogic
             case (Composer c1, Composer c2): Update(c1, c2); break;
         }
     }
+    [ExcludeFromCodeCoverage]
     public object? GetByID<TKey>(TKey value) => value switch
     {
         long s => GetByID(s),

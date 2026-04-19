@@ -1,7 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using NAudio.Wave;
 using SQLitePCL;
-
+[ExcludeFromCodeCoverage]
 public class AlterCompMenu : AlterMenu
 {
     protected readonly string[] _prompts = [

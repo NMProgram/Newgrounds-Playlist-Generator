@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+
+[ExcludeFromCodeCoverage]
 public class MainMenu : Menu
 {
     protected override string MenuStr => @"

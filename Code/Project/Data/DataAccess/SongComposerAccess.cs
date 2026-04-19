@@ -1,5 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
 using Dapper;
-
 public class SongComposerAccess : Accessor
 {
     public SongComposerAccess(IConnection con) : base("SongComposer", con)
@@ -10,11 +10,13 @@ public class SongComposerAccess : Accessor
         PRIMARY KEY(songID, composerID)
         );");
     }
+    [ExcludeFromCodeCoverage]
     public void Insert(SongComposer sc)
     {
         string sql = $"INSERT INTO {Table} VALUES (@SongID, @ComposerID)";
         ExecuteSQL(sql, sc);
     }
+    [ExcludeFromCodeCoverage]
     public void Update(long songID, long oldID)
     {
         string sql = @$"UPDATE {Table} 

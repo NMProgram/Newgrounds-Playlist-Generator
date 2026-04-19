@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+
+[ExcludeFromCodeCoverage]
 public class UpdateCompMenu : AlterCompMenu
 {
     protected override string MenuStr => @"

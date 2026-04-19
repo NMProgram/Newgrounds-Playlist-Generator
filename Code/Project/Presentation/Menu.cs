@@ -1,6 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading.Channels;
-
+[ExcludeFromCodeCoverage]
 public abstract class Menu
 {
     protected bool _active = true;

@@ -1,7 +1,8 @@
 using TagLib;
 using System.Text;
 using Microsoft.VisualBasic;
-
+using System.Diagnostics.CodeAnalysis;
+[ExcludeFromCodeCoverage]
 public class UpdateSongMenu : AlterSongMenu
 {
     protected override string MenuStr => @"

@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+
+[ExcludeFromCodeCoverage]
 public class FilterMenu : MainMenu
 {
     protected override string MenuStr => @"

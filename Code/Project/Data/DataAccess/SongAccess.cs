@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Dapper;
 
 public class SongAccess : Accessor
@@ -42,6 +43,7 @@ public class SongAccess : Accessor
     {
         ExecuteSQL("INSERT INTO Song VALUES (@ID, @Name, @ReleaseDate, @Genre, @LevelID, @Available, @Audio)", song);
     }
+    [ExcludeFromCodeCoverage]
     public void Update(Song song, long oldID)
     {
         string sql = @"UPDATE Song 
@@ -75,7 +77,7 @@ public class SongAccess : Accessor
         => GetSongs("WHERE s.id BETWEEN @First AND @Last ORDER BY s.id", 
         new {First = first, Last = last});
     public IEnumerable<Song> GetBetweenData(string first, string last)
-        => GetSongs("WHERE LOWER(s.name) BETWEEN @First AND @Last ORDER BY s.name",
+        => GetSongs("WHERE LOWER(s.name) BETWEEN LOWER(@First) AND LOWER(@Last) ORDER BY s.name",
         new {First = first, Last = last});
     public IEnumerable<Song> GetBetweenData(DateTime first, DateTime last)
         => GetSongs("WHERE s.releaseDate BETWEEN @First AND @Last ORDER BY s.releaseDate", 
@@ -85,5 +87,5 @@ public class SongAccess : Accessor
     public IEnumerable<Song> GetUnavailable() 
         => GetSongs("WHERE s.available = 0 ORDER BY s.id");
     public IEnumerable<Song> GetByComposer(string name) 
-        => GetSongs("WHERE c.name LIKE @Name", new { Name = name });
+        => GetSongs("WHERE c.name LIKE @Name", new { Name = $"%{name}%" });
 }

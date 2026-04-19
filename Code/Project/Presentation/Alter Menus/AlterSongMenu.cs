@@ -1,6 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using NAudio.Wave;
 using SQLitePCL;
-
+[ExcludeFromCodeCoverage]
 public class AlterSongMenu : AlterMenu
 {
     protected readonly string[] _prompts = [

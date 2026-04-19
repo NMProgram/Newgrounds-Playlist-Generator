@@ -1,6 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json.Serialization.Metadata;
-
+[ExcludeFromCodeCoverage]
 public class FilterSongMenu : FilterMenu
 {
     protected override string MenuStr => @"

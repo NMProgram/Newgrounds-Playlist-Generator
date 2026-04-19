@@ -1,9 +1,11 @@
 using System.Globalization;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
 {
     private string _name;
-    static CancellationTokenSource _cts = new();
+    static CancellationTokenSource _loadCTS = new();
+    static CancellationTokenSource _runCTS = new();
     public long ID { get; private set; }
     public string Name { get => _name; set => _name = string.IsNullOrEmpty(value) ? _name : value; }
     public DateTime ReleaseDate { get; private set; }
@@ -12,7 +14,7 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     public long Available { get; private set; }
     public byte[] Audio { get; private set; }
     public List<Composer> Composers { get; } = [];
-    public Song(long id, string name, string releaseDate, long genre, 
+    public Song(long id, string name, string releaseDate, long genre,
     long levelID, long available, byte[] audio)
     {
         ID = id;
@@ -23,7 +25,7 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
         Available = available;
         Audio = audio;
     }
-    public Song(Song song) : this(song.ID, song.Name, song.ReleaseDate.ToString("yyyy-MM-dd HH:mm:ss"), 
+    public Song(Song song) : this(song.ID, song.Name, song.ReleaseDate.ToString("yyyy-MM-dd HH:mm:ss"),
     (int)song.Genre, song.LevelID, song.Available, song.Audio)
     {
         List<Composer> comps = [];
@@ -36,11 +38,11 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
         Song clone = new(ID, Name, ReleaseDate.ToString("yyyy-MM-dd HH:mm:ss"), (int)Genre, LevelID, Available, Audio);
         foreach (var comp in Composers) { clone.AddComposer(new Composer(comp)); }
         return clone;
-    }    
+    }
     public void AddComposer(Composer? composer)
     {
         if (composer is not null && !Composers.Contains(composer))
-        { 
+        {
             Composers.Add(composer);
             composer.AddSong(this);
         }
@@ -49,28 +51,44 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     {
         foreach (var comp in composers.Distinct()) { AddComposer(comp); }
     }
-    public async Task PlayAsync() 
+    public async Task PlayAsync()
     {
-        var token = ResetCTS();
-        using Mp3FileReader reader = new(new MemoryStream(Audio));
-        using WaveOutEvent output = new();
-        var tcs = RunSong(reader, output);
-        var completed = await Task.WhenAny(tcs.Task, Task.Run(token.WaitHandle.WaitOne));
-        if (completed != tcs.Task) { output.Stop(); }
+        var loadToken = ResetCTS(ref _loadCTS);
+        WaveFileReader? wavReader = null;
+        try
+        {
+            wavReader = await new AudioPlayer(Audio).CreateWavAsync(-10);
+            if (loadToken.IsCancellationRequested) { return; }
+            TaskCompletionSource<bool> tcs = new(false);
+            var runToken = ResetCTS(ref _runCTS);
+            await PlaybackAsync(wavReader, runToken);
+        }
+        catch (OperationCanceledException) 
+        { wavReader?.Dispose(); }
     }
-    static CancellationToken ResetCTS()
+    static CancellationToken ResetCTS(ref CancellationTokenSource cts)
     {
-        _cts.Cancel();
-        _cts = new();
-        return _cts.Token;
+        cts.Cancel();
+        cts = new CancellationTokenSource();
+        return cts.Token;
     }
-    static TaskCompletionSource<bool> RunSong(Mp3FileReader reader, WaveOutEvent output)
+    private async Task PlaybackAsync(WaveFileReader wavReader, CancellationToken token)
     {
-        TaskCompletionSource<bool> tcs = new(false);
-        output.PlaybackStopped += (s, args) => tcs.TrySetResult(true);
-        output.Init(reader);
+        WaveOutEvent output = new();
+        TaskCompletionSource<bool> tcs = new();
+        output.PlaybackStopped += (s, e) => tcs.TrySetResult(true);
+        output.Init(wavReader);
         output.Play();
-        return tcs;
+        try
+        {
+            var cancelTask = Task.Delay(Timeout.Infinite, token);
+            var completed = await Task.WhenAny(tcs.Task, cancelTask);
+            if (completed == cancelTask)
+            { output.Stop(); await tcs.Task; }
+            else { await tcs.Task; }
+        }
+        finally
+        { wavReader.Dispose(); output.Dispose(); }
     }
     public int CompareTo(Song? other)
     {
@@ -119,7 +137,7 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     public override string ToString()
     {
         _ = PlayAsync();
-        return string.Join('\n', GetID(), GetName(), GetReleaseDate(), 
+        return string.Join('\n', GetID(), GetName(), GetReleaseDate(),
         GetGenre(), GetLevelID(), GetAvailable(), GetComposers()).Bold();
     }
 }

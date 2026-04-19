@@ -40,7 +40,10 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     public void AddComposer(Composer? composer)
     {
         if (composer is not null && !Composers.Contains(composer))
-        { Composers.Add(composer); }
+        { 
+            Composers.Add(composer);
+            composer.AddSong(this);
+        }
     }
     public void AddComposer(IEnumerable<Composer> composers)
     {
@@ -72,24 +75,19 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     public int CompareTo(Song? other)
     {
         if (other is null) { return 1; }
-        int id = ID.CompareTo(other.ID);
-        if (id != 0) { return id; }
         int name = Name.CompareTo(other.Name);
         if (name != 0) { return name; }
-        return ReleaseDate.CompareTo(other.ReleaseDate);
+        return ID.CompareTo(other.ID);
     }
     public bool Equals(Song? other)
     {
         if (other is null) { return false; }
-        return Audio.SequenceEqual(other.Audio);
+        return Audio.SequenceEqual(other.Audio) && ID == other.ID;
     }
     public override bool Equals(object? obj) => Equals(obj as Song);
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(Audio);
-    }
+    public override int GetHashCode() => HashCode.Combine(Audio, ID);
     public void SetID(long id) => ID = Math.Max(id, 1);
-    public void SetName(string name) => Name = !string.IsNullOrEmpty(name) ? name : Name;
+    public void SetName(string name) => Name = name;
     public void SetReleaseDate(string releaseDate)
     {
         bool succ = DateTime.TryParseExact(releaseDate, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime res);
@@ -109,7 +107,15 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     string GetGenre() => $"Genre: {ConversionLogic.GetGenreName(Genre.ToString())}";
     string GetLevelID() => $"First GD Level ID: {LevelID}";
     string GetAvailable() => $"Available on Newgrounds: {Available == 1}";
-    string GetComposers() => $"Composers: {string.Join(", ", Composers.Select(x => $"\'{x.Name}\'"))}";
+    string GetComposers()
+    {
+        return Composers.Count switch
+        {
+            0 => "Composers: N/A",
+            1 => $"Composer: \'{Composers[0].Name}\'",
+            _ => $"Composers: {string.Join(", ", Composers.Select(x => $"\'{x.Name}\'"))}",
+        };
+    }
     public override string ToString()
     {
         _ = PlayAsync();

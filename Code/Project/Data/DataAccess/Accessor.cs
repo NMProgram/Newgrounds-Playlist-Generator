@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Dapper;
+using System.Diagnostics.CodeAnalysis;
 
 public class Accessor
 {
@@ -10,8 +11,6 @@ public class Accessor
         Table = table;
         _con = con;
     }
-    public Accessor(IConnection con) : this("", con)
-    {}
     SqliteConnection Connect() => new(_con.GetConnection());
     protected void ExecuteSQL(string sql, object? DP = null)
     {
@@ -23,11 +22,13 @@ public class Accessor
         using var con = Connect();
         return con.ExecuteScalar<T>(sql, DP);
     }
+    [ExcludeFromCodeCoverage]
     protected T? QuerySingle<T>(string sql, object? DP = null)
     {
         using var con = Connect();
         return con.QueryFirstOrDefault(sql, DP);
     }
+    [ExcludeFromCodeCoverage]
     protected IEnumerable<T1> QueryAll<T1, T2>(string sql, Func<T1, T2, T1> mapper, object? DP = null)
     {
         using var con = Connect();

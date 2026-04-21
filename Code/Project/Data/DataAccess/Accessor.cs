@@ -11,7 +11,7 @@ public class Accessor
         Table = table;
         _con = con;
     }
-    SqliteConnection Connect() => new(_con.GetConnection());
+    SqliteConnection Connect() => _con.Connect();
     protected void ExecuteSQL(string sql, object? DP = null)
     {
         using var con = Connect();

@@ -1,4 +1,4 @@
-public class SongLogic : AccessLogic
+public class SongLogic : AccessLogic<long, Song>
 {
     public SongLogic(IConnection con) : base(con)
     {}
@@ -11,10 +11,12 @@ public class SongLogic : AccessLogic
         //     _scAccess.Insert(new(song.ID, comp.ID));
         // }
     }
-    public void Update(Song oldSong, Song newSong)
+    public override void Update(Song oldSong, Song newSong)
     {
-        Delete(oldSong);
-        Add(newSong);
+        _sAccess.Update(newSong, oldSong.ID);
+        _scAccess.Update(newSong.ID, oldSong.ID);
+        // Delete(oldSong);
+        // Add(newSong);
     }
     public void Delete(Song song)
     {
@@ -23,7 +25,7 @@ public class SongLogic : AccessLogic
         foreach (var id in compIDs)
         { _cAccess.Delete(id); }
     }
-    public Song? GetByID(long id) => _sAccess.GetByID(id);
+    public override Song? GetByID(long id) => _sAccess.GetByID(id);
     public Song? GetClosestMatch(long id) => _sAccess.GetByClosestID(id);
     public IEnumerable<Song> GetSongMatches(string search) 
         => _sAccess.GetMatchResults(search);

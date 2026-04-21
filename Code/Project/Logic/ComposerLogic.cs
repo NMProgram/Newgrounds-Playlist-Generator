@@ -1,4 +1,4 @@
-public class ComposerLogic : AccessLogic
+public class ComposerLogic : AccessLogic<string, Composer>
 {
     public ComposerLogic(IConnection con) : base(con)
     {}
@@ -6,24 +6,35 @@ public class ComposerLogic : AccessLogic
     {
         _cAccess.Insert(comp);
         foreach (var song in comp.Songs)
-        { _scAccess.Insert(new(song.ID, comp.ID)); }
+        { AddSong(comp, song); }
     }
-    public void Update(Composer oldComp, Composer newComp)
+    public override void Update(Composer oldComp, Composer newComp)
     {
-        Delete(oldComp);
-        Add(newComp);
+        _cAccess.Update(newComp, oldComp.Name);
+    }
+    public void AddSong(Composer comp, Song song)
+    {
+        _scAccess.Insert(new(song.ID, comp.ID));
+    }
+    public void UpdateSong(Composer comp, Song oldSong, Song newSong)
+    {
+        RemoveSong(comp, oldSong);
+        AddSong(comp, newSong);
+    }
+    public void RemoveSong(Composer comp, Song song)
+    {
+        _scAccess.Delete(song.ID, comp.ID);
     }
     public void Delete(Composer comp)
     {
-        _cAccess.Delete(comp);
-        _scAccess.Delete(new SongComposer(-1, comp.ID));
+        Delete(comp.ID);
     }
     public void Delete(long id)
     {
-        _cAccess.Delete(id);
         _scAccess.Delete(new SongComposer(-1, id));
+        _cAccess.Delete(id);
     }
-    public Composer? GetByID(string name) => _cAccess.GetByName(name);
+    public override Composer? GetByID(string name) => _cAccess.GetByName(name);
     public IEnumerable<Composer> GetComposerMatches(string search) 
         => _cAccess.GetMatchResults($"%{search}%");
     public IEnumerable<Composer> GetBetweenCompData(string first, string last)

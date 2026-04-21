@@ -57,7 +57,7 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
         WaveFileReader? wavReader = null;
         try
         {
-            wavReader = await new AudioPlayer(Audio).CreateWavAsync(-10);
+            wavReader = await new AudioPlayer(Audio).CreateWavAsync(-12);
             if (loadToken.IsCancellationRequested) { return; }
             TaskCompletionSource<bool> tcs = new(false);
             var runToken = ResetCTS(ref _runCTS);

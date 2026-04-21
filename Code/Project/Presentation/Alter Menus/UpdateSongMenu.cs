@@ -26,6 +26,12 @@ public class UpdateSongMenu : AlterSongMenu
         '7' => () => CheckActivity(AudioFile),
         _ => () => _active = false
     };
+    protected void UpdateData<T>(string type, string prompt, Func<string, (bool, long, string?)> validator, Action<Song> action, Func<Song, T> getter)
+    {
+        long oldID = Validate(prompt, validator);
+        var (o, n) = SetUpdate(oldID, _sLogic, action);
+        Console.WriteLine($"Successfully changed the {type} of the Song {o.Name.Bold()} from \'{getter(o)}\' to \'{getter(n)}\'!");
+    }
     void UpdateData<T>(string type, Action<Song> action, Func<Song, T> getter)
     {
         UpdateData(type, _prompts[0], x => CheckID(x, _sLogic.IsInDatabase), action, getter);

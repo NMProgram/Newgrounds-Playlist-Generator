@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Xml.Schema;
 
 [ExcludeFromCodeCoverage]
 public class AlterMenu : MainMenu
@@ -15,20 +16,14 @@ public class AlterMenu : MainMenu
         '2' => new AlterCompMenu().Start,
         _ => () => _active = false
     };
-    protected void UpdateData<TKey, TEntity, TValue>(
-        string type, string prompt, 
-        Func<string, (bool, TKey, string?)> validator, Action<TEntity> action, Func<TEntity, TValue> getter
-    ) 
-    where TEntity : ICloneable, INamed
+    
+    
+    protected (TValue, TValue) SetUpdate<TKey, TValue>(TKey key, AccessLogic<TKey, TValue> getter, Action<TValue> action) where TValue : ICloneable
     {
-        TKey oldValue = Validate(prompt.Insert(9, " old"), validator);
-        _name = oldValue!.ToString()!;
-        TEntity o = (TEntity)_sLogic.GetByID(oldValue)!;
-        TEntity n = (TEntity)o.Clone();
+        TValue o = getter.GetByID(key)!;
+        TValue n = (TValue)o.Clone();
         action(n);
-        _sLogic.Update(o, n);
-        string msg = $"Successfully changed the {type} of the {typeof(TEntity)} {o.Name.Bold()} from \'{getter(o)}\' to \'{getter(n)}\'!";
-        Console.WriteLine(msg);
+        getter.Update(o, n);
+        return (o, n);
     }
-
 }

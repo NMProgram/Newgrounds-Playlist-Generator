@@ -1,4 +1,6 @@
+using System.ComponentModel.Design.Serialization;
 using System.Globalization;
+using NAudio.MediaFoundation;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
@@ -6,6 +8,8 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     private string _name;
     static CancellationTokenSource _loadCTS = new();
     static CancellationTokenSource _runCTS = new();
+    static WaveOutEvent? _output = null;
+    static WaveChannel32? _provider = null;
     public long ID { get; private set; }
     public string Name { get => _name; set => _name = string.IsNullOrEmpty(value) ? _name : value; }
     public DateTime ReleaseDate { get; private set; }
@@ -66,6 +70,19 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
         catch (OperationCanceledException) 
         { wavReader?.Dispose(); }
     }
+    async Task FadeOutAsync()
+    {
+        if (_output is null || _provider is null) { return; }
+        const float STEPS = 50;
+        const int DELAY = 10;
+        for (int i = 0; i < STEPS; i++)
+        {
+            _provider.Volume = 1f - (i / STEPS);
+            await Task.Delay(DELAY);
+        }
+        _output.Stop(); _output.Dispose();
+        _output = null; _provider = null;
+    }
     static CancellationToken ResetCTS(ref CancellationTokenSource cts)
     {
         cts.Cancel();
@@ -74,21 +91,23 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     }
     private async Task PlaybackAsync(WaveFileReader wavReader, CancellationToken token)
     {
+        await FadeOutAsync();
+        WaveChannel32 provider = new(wavReader) { Volume = 1.0f };
         WaveOutEvent output = new();
         TaskCompletionSource<bool> tcs = new();
         output.PlaybackStopped += (s, e) => tcs.TrySetResult(true);
-        output.Init(wavReader);
+        output.Init(provider);
         output.Play();
+        _output = output;
+        _provider = provider;
         try
         {
             var cancelTask = Task.Delay(Timeout.Infinite, token);
             var completed = await Task.WhenAny(tcs.Task, cancelTask);
-            if (completed == cancelTask)
-            { output.Stop(); await tcs.Task; }
-            else { await tcs.Task; }
+            await tcs.Task;
         }
         finally
-        { wavReader.Dispose(); output.Dispose(); }
+        { wavReader.Dispose(); }
     }
     public int CompareTo(Song? other)
     {

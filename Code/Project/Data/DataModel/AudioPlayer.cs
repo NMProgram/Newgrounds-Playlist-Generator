@@ -4,10 +4,7 @@ using NAudio.Wave;
 public class AudioPlayer
 {
     byte[] Audio { get; }
-    public AudioPlayer(byte[] audio)
-    {
-        Audio = audio;
-    }
+    public AudioPlayer(byte[] audio) => Audio = audio;
     public async Task<WaveFileReader> CreateWavAsync(double target)
         => await Task.Run(() => CreateWav(target));
     WaveFileReader CreateWav(double target)

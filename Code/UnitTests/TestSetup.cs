@@ -8,7 +8,7 @@ public class TestStartup
     protected readonly static SongLogic _sAccess = new(Factory);
     protected readonly static ComposerLogic _cAccess = new(Factory);
     protected readonly static SongComposerAccess _scAccess = new(Factory);
-    static SqliteConnection Conn = new(Factory.GetConnection());
+    static SqliteConnection Conn = Factory.Connect();
     static void SetupSongs()
     {
         string songSQL = @"INSERT INTO Song 

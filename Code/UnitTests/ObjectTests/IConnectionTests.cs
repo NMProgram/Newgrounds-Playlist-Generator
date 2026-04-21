@@ -1,3 +1,5 @@
+using Microsoft.Data.Sqlite;
+
 namespace ObjectTests;
 
 [TestClass]
@@ -11,8 +13,8 @@ public sealed class IConnectionTests
         // Arrange
         InFile iF = new();
         // Act
-        string conStr = iF.GetConnection(fileName);
+        SqliteConnection con = iF.Connect(fileName);
         // Assert
-        Assert.AreEqual($"Data Source=Data/DataSource\\{fileName ?? "database.db"}", conStr);
+        Assert.AreEqual($"Data Source=Data/DataSource\\{fileName ?? "database.db"}", con.ConnectionString);
     }
 }

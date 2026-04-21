@@ -9,23 +9,40 @@ public sealed class ComposerLogicTests : TestStartup
     public void AddUpdateDelete_ComposerLogic_ReturnsComposerOrNull()
     {
         // Arrange
-        Composer comp = new(0, "-", "2020-10-10 00:00:00", 2000, "", 1);
+        Composer comp = new(-90234, "-", "2020-10-10 00:00:00", 2000, "", 1);
+        
         // Act
         _cAccess.Add(comp);
         Composer? foundComp = _cAccess.GetByID("-");
         // Assert
-        Assert.AreEqual(foundComp, comp);
+        Assert.AreEqual(foundComp.ToString(), comp.ToString());
+        // Arrange
+        Song s1 = _sAccess.GetByID(311087);
+        Song s2 = _sAccess.GetByID(643474);
         // Act
-        foundComp?.SetName("*");
+        _cAccess.AddSong(foundComp, s1);
+        // Assert
+        Assert.Contains(foundComp.ID, _scAccess.GetCompIDs(s1.ID));
+        // Act
+        _cAccess.UpdateSong(comp, s1, s2);
+        // Assert
+        Assert.Contains(foundComp.ID, _scAccess.GetCompIDs(s2.ID));
+        Assert.DoesNotContain(foundComp.ID, _scAccess.GetCompIDs(s1.ID));
+        // Act
+        _cAccess.RemoveSong(comp, s2);
+        // Assert
+        Assert.DoesNotContain(foundComp.ID, _scAccess.GetCompIDs(s2.ID));
+        // Act
+        foundComp?.SetName("***");
         _cAccess.Update(comp, foundComp!);
-        Composer? newComp = _cAccess.GetByID("*");
+        Composer? newComp = _cAccess.GetByID("***");
         Composer? notAnymore = _cAccess.GetByID("-");
         // Assert
-        Assert.AreEqual(newComp, foundComp);
+        Assert.AreEqual(newComp.ToString(), foundComp.ToString());
         Assert.IsNull(notAnymore);
         // Act
-        _cAccess.Delete(newComp!.ID);
-        Composer? notHere = _cAccess.GetByID("*");
+        _cAccess.Delete(newComp!);
+        Composer? notHere = _cAccess.GetByID("***");
         // Assert
         Assert.IsNull(notHere);
     }
@@ -173,7 +190,7 @@ public sealed class ComposerLogicTests : TestStartup
     }
     [TestMethod]
     [DataRow(2, 598682)]
-    [DataRow(1, 311087)]
+    [DataRow(1, 643474)]
     public void GetBySongID_ComposerLogic_ReturnsCompsOrComp(int count, long id)
     {
         // ^^^ Arrange ^^^

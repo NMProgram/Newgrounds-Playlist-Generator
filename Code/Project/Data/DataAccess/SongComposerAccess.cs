@@ -10,13 +10,11 @@ public class SongComposerAccess : Accessor
         PRIMARY KEY(songID, composerID)
         );");
     }
-    [ExcludeFromCodeCoverage]
     public void Insert(SongComposer sc)
     {
         string sql = $"INSERT INTO {Table} VALUES (@SongID, @ComposerID)";
         ExecuteSQL(sql, sc);
     }
-    [ExcludeFromCodeCoverage]
     public void Update(long songID, long oldID)
     {
         string sql = @$"UPDATE {Table} 
@@ -30,6 +28,11 @@ public class SongComposerAccess : Accessor
         string sql = $"DELETE FROM {Table} WHERE songID = @SongID";
         ExecuteSQL(sql, new { SongID = songID });
         return compIDs;
+    }
+    public void Delete(long songID, long compID)
+    {
+        string sql = $"DELETE FROM {Table} WHERE songID = @SongID AND composerID = @CompID";
+        ExecuteSQL(sql, new { SongID = songID, CompID = compID });
     }
     public void Delete(SongComposer sc)
     {

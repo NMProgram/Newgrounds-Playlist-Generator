@@ -36,7 +36,7 @@ public sealed class SongLogicTests : TestStartup
     public void GetByID_SongLogic_ReturnsSongWithOneComp(long id)
     {
         // ^^^ Arrange ^^^
-        AccessLogic logic = new(Factory);
+        SongLogic logic = new(Factory);
         // Act
         Song? song = _sAccess.GetByID(id);
         // Assert

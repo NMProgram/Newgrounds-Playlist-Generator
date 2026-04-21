@@ -6,22 +6,24 @@ public class UpdateCompMenu : AlterCompMenu
     protected override string MenuStr => @"
     [1] Add Song
     [2] Update Song
-    [3] Update Name
-    [4] Update Join Date
-    [5] Update Age
-    [6] Update Description
-    [7] Update Availability
+    [3] Remove Song
+    [4] Update Name
+    [5] Update Join Date
+    [6] Update Age
+    [7] Update Description
+    [8] Update Availability
     [Q] Return to Alter Composer Menu
     ";
     protected override Action GetAction(char inp) => inp switch
     {
         '1' => () => CheckActivity(AddSong),
         '2' => () => CheckActivity(UpdateSong),
-        '3' => () => CheckActivity(Name),
-        '4' => () => CheckActivity(Date),
-        '5' => () => CheckActivity(Age),
-        '6' => () => CheckActivity(Description),
-        '7' => () => CheckActivity(Available),
+        '3' => () => CheckActivity(RemoveSong),
+        '4' => () => CheckActivity(Name),
+        '5' => () => CheckActivity(Date),
+        '6' => () => CheckActivity(Age),
+        '7' => () => CheckActivity(Description),
+        '8' => () => CheckActivity(Available),
         _ => () => _active = false
     };
     (bool, long, string?) CheckSongIDs(string inp, string name, Func<string, long, (bool, long, string?)> func)
@@ -36,28 +38,55 @@ public class UpdateCompMenu : AlterCompMenu
         x => CheckSongIDs(x, comp.Name, _cLogic.IsNotNewSong));
         Song song = GetSong();
         int i = comp.UpdateSong(oldID, song);
+        _cLogic.UpdateSong(comp, _sLogic.GetByID(oldID)!, song);
         return i;
     }
-    void UpdateData<T>(string type, Action<Composer> action, Func<Composer, T> getter)
+    protected void UpdateData<T>(string type, Action<Composer> action, Func<Composer, T> getter, Func<T, T, string>? message = null)
     {
-        UpdateData(type, _prompts[0], InputLogic.IsNotEmpty, action, getter);
+        string oldName = Validate(_prompts[0], x => ValidString(x, _cLogic.IsInDatabase));
+        var (o, n) = SetUpdate(oldName, _cLogic, action);
+        string msg = message is not null ? message(getter(o), getter(n)) : 
+        $"Successfully changed the {type} of the Composer {o.Name.Bold()} from \'{getter(o)}\' to \'{getter(n)}\'!";
+        Console.WriteLine(msg);
         AskEnter();
+    }
+    void UpdateData<T>(Action<Composer> action, Func<Composer, T> getter, Func<T, T, string>? message)
+    {
+        UpdateData("", action, getter, message);
     }
     void AddSong()
     {
-        string name = Validate(_prompts[0], InputLogic.IsNotEmpty, _cLogic.IsInDatabase);
-        long id = Validate("Enter the ID of the Song to add: ", 
-        x => CheckSongIDs(x, name, _cLogic.IsNewSong));
-        Song song = _sLogic.GetByID(id)!;
-        Composer o = _cLogic.GetByID(name)!; Composer n = (o.Clone() as Composer)!;
-        n.AddSong(song); _cLogic.Update(o, n);
-        Console.WriteLine($"Successfully added the following Song Details under the name \'{name}\':\n\n{song}");
+        Song song = null!;
+        void Action(Composer comp)
+        {
+            long id = Validate("Enter the ID of the Song to add: ", 
+            x => CheckSongIDs(x, comp.Name, _cLogic.IsNewSong));
+            song = _sLogic.GetByID(id)!;
+            comp.AddSong(song);
+            _cLogic.AddSong(comp, song);
+        }
+        UpdateData(Action, c => c.Name, (name, _) => 
+        $"Successfully added the following Song Details under the name \'{name}\':\n\n{song}");
     }
     void UpdateSong()
     {
         int index = 0;
         UpdateData("Song", newComp => { index = ReplaceSong(newComp); }, 
         any => any.Songs[index].Name);
+    }
+    public void RemoveSong()
+    {
+        Song song = null!;
+        void Action(Composer comp)
+        {
+            long id = Validate("Enter the ID of the Song to remove: ",
+            x => CheckSongIDs(x, comp.Name, _cLogic.IsNotNewSong));
+            song = _sLogic.GetByID(id)!;
+            comp.Songs.Remove(song);
+            _cLogic.RemoveSong(comp, song);
+        }
+        UpdateData(Action, c => c.Name, (name, _) => 
+        $"Successfully removed the following Song details under the name \'{name}\':\n\n{song}");
     }
     void Name()
     {

@@ -38,7 +38,7 @@ public class Audio
         // using RawSourceWaveStream reader = new(new MemoryStream(, ));
         await FadeOutAsync();
         (float volume, byte[] trimmed) = await _rmsSetup;
-        using RawSourceWaveStream wave = new(new MemoryStream(trimmed), new(44100, 16, 1));
+        using RawSourceWaveStream wave = new(new MemoryStream(trimmed), new(44100, 16, 2));
         VolumeSampleProvider provider = new(wave.ToSampleProvider())
         { Volume = Math.Clamp(volume, 0f, 1f) };
         var (tcs, output) = AudioPlayer.SetupAudio(provider);

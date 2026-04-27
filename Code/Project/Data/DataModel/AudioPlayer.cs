@@ -5,6 +5,7 @@ public static class AudioPlayer
 {
     const float _minRMS = 1E-3f;
     const int _blockSize = 2048;
+    const int _samplesPerBlock = _blockSize * 2;
     public static (TaskCompletionSource<bool>, WaveOutEvent) SetupAudio(ISampleProvider provider)
     {
         WaveOutEvent output = new();
@@ -18,19 +19,19 @@ public static class AudioPlayer
     {
         short[] samples = bytes.ToShorts();
         int first = -1; int last = -1;
-        for (int b = 0; b < _blockSize; b++)
+        for (int b = 0; b < samples.Length / _samplesPerBlock; b++)
         {
             if (CheckBlock(b, samples, out double rms) && rms > _minRMS)
             { first = first == -1 ? b : first; last = b; }
         }
         if (first == -1 || last == -1) { return samples; }
-        int start = first * _blockSize; int end = last * _blockSize;
+        int start = first * _samplesPerBlock; int end = last * _samplesPerBlock;
         return samples[start..(end + 1)];
     }
     static byte[] CreatePCMBytes(byte[] mp3Bytes)
     {
         using var reader = new Mp3FileReader(new MemoryStream(mp3Bytes));
-        using var resampler = new MediaFoundationResampler(reader, new WaveFormat(44100, 16, 1))
+        using var resampler = new MediaFoundationResampler(reader, new WaveFormat(44100, 16, 2))
         { ResamplerQuality = 60 };
         using var ms = new MemoryStream();
         byte[] buffer = new byte[8192]; // reads in chunks
@@ -45,7 +46,7 @@ public static class AudioPlayer
         if (pcmBytes.Length < 2)
         { return (0, pcmBytes); }
         short[] samples = TrimAudio(pcmBytes);
-        int blocks = samples.Length / _blockSize;
+        int blocks = samples.Length / _samplesPerBlock;
         double totalRMS = 0; int valid = 0;
         for (int b = 0; b < blocks; b++)
         {
@@ -59,14 +60,14 @@ public static class AudioPlayer
     static bool CheckBlock(int block, short[] samples, out double rms)
     {
         double sum = 0;
-        int start = block * _blockSize;
-        for (int i = 0; i < _blockSize; i++)
+        int start = block * _samplesPerBlock;
+        for (int i = 0; i < _samplesPerBlock; i++)
         {
             if (start + i >= samples.Length) { break; }
             double s = samples[start + i] / 32768.0;
             sum += s * s;
         }
-        rms = Math.Sqrt(sum / _blockSize);
+        rms = Math.Sqrt(sum / _samplesPerBlock);
         return rms > _minRMS;
     }
 }

@@ -224,63 +224,87 @@ public sealed class ComposerLogicTests : TestStartup
     [DataRow(true, "Fantomenk")]
     [DataRow(true, "KDrew")]
     [DataRow(false, "Invalid")]
+    [DataRow(false, "")]
+    [DataRow(false, null)]
     public void IsInDatabase_ComposerLogic_ReturnsTuple(bool exp, string name)
     {
         // ^^^ Arrange ^^^
-        
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{name} was not found in the database."
+        ];
         // Act
         var (res, val, err) = _cAccess.IsInDatabase(name);
         // Assert
         Assert.AreEqual(exp, res);
         Assert.AreEqual(exp, !string.IsNullOrEmpty(val));
-        Assert.AreEqual(exp, err is null);
+        Assert.AreEqual(exp, !errs.Contains(err));
     }
     [TestMethod]
     [DataRow(false, "Waterflame")]
     [DataRow(false, "Fantomenk")]
     [DataRow(false, "KDrew")]
+    [DataRow(false, "")]
+    [DataRow(false, null)]
     [DataRow(true, "Invalid")]
     public void IsNotInDatabase_ComposerLogic_ReturnsTuple(bool exp, string name)
     {
         // ^^^ Arrange ^^^
-        
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{name} already exists in the database."
+        ];
         // Act
         var (res, val, err) = _cAccess.IsNotInDatabase(name);
         // Assert
         Assert.AreEqual(exp, res);
         Assert.AreEqual(exp, !string.IsNullOrEmpty(val));
-        Assert.AreEqual(exp, err is null);
+        Assert.AreEqual(exp, !errs.Contains(err));
     }
     [TestMethod]
-    [DataRow(true, "Waterflame", 643474)]
-    [DataRow(true, "Fantomenk", 386900)]
-    [DataRow(true, "KDrew", 311087)]
-    [DataRow(false, "Helpegasus", 598682)]
-    public void IsNewSong_ComposerLogic_ReturnsTuple(bool exp, string name, long id)
+    [DataRow(true, "Waterflame", "643474")]
+    [DataRow(true, "Fantomenk", "386900")]
+    [DataRow(true, "KDrew", "311087")]
+    [DataRow(false, "Helpegasus", "598682")]
+    [DataRow(false, "", "0")]
+    [DataRow(false, null, "0")]
+    [DataRow(false, "Something Nonexistant", "0")]
+    public void IsNewSong_ComposerLogic_ReturnsTuple(bool exp, string name, string id)
     {
         // ^^^ Arrange ^^^
-        
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{name} was not found in the database.",
+            $"\'{name}\' already has the Song \'{_sAccess.GetByID(int.Parse(id))?.Name}\' (ID \'{id}\')."
+        ];
         // Act
         var (res, val, err) = _cAccess.IsNewSong(name, id);
         // Assert
         Assert.AreEqual(exp, res);
         Assert.AreEqual(exp, val != -1);
-        Assert.AreEqual(exp, err is null);
+        Assert.AreEqual(exp, !errs.Contains(err));
     }
     [TestMethod]
-    [DataRow(false, "Waterflame", 643474)]
-    [DataRow(false, "Fantomenk", 386900)]
-    [DataRow(false, "KDrew", 311087)]
-    [DataRow(true, "Helpegasus", 598682)]
-    public void IsNotNewSong_ComposerLogic_ReturnsTuple(bool exp, string name, long id)
+    [DataRow(false, "Waterflame", "643474")]
+    [DataRow(false, "Fantomenk", "386900")]
+    [DataRow(false, "KDrew", "311087")]
+    [DataRow(false, "", "0")]
+    [DataRow(false, null, "0")]
+    [DataRow(false, "Something Nonexistant", "0")]
+    [DataRow(true, "Helpegasus", "598682")]
+    public void IsNotNewSong_ComposerLogic_ReturnsTuple(bool exp, string name, string id)
     {
         // ^^^ Arrange ^^^
-        
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{name} was not found in the database.",
+            $"\'{name}\' doesn't have a Song with ID \'{id}\'."
+        ];
         // Act
         var (res, val, err) = _cAccess.IsNotNewSong(name, id);
         // Assert
         Assert.AreEqual(exp, res);
         Assert.AreEqual(exp, val != -1);
-        Assert.AreEqual(exp, err is null);
+        Assert.AreEqual(exp, !errs.Contains(err));
     }
 }

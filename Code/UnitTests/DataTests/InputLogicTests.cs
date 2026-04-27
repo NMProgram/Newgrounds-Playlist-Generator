@@ -1,4 +1,4 @@
-namespace DataTests;
+namespace LogicTests;
 
 [TestClass]
 public sealed class InputLogicTests
@@ -28,37 +28,80 @@ public sealed class InputLogicTests
         // Assert
         Assert.IsFalse(res);
         Assert.IsEmpty(val);
-        Assert.IsNotNull(err);
+        Assert.AreEqual("Please enter at least one character.", err);
     }
     [TestMethod]
-    [DataRow(1)]
-    [DataRow(15)]
-    [DataRow(22)]
-    public void IsInOptions_Ints_Success(int value)
+    [DataRow("1")]
+    [DataRow("15")]
+    [DataRow("22")]
+    public void IsBetween_Ints_Success(string value)
     {
         // ^^^ Arrange ^^^
         int[] values = ConversionLogic.CreateNumArr(1, 22, 1);
         // Act
-        var (res, val, err) = InputLogic.IsInOptions(value, values);
+        var (res, val, err) = InputLogic.IsBetween(value, values.Min(), values.Max());
         // Assert
         Assert.IsTrue(res);
         Assert.AreNotEqual(-1, val);
         Assert.IsNull(err);
     }
     [TestMethod]
-    [DataRow(-1)]
-    [DataRow(0)]
-    [DataRow(23)]
-    public void IsNotEmpty_Ints_Fail(int value)
+    [DataRow("-1")]
+    [DataRow("Hello")]
+    [DataRow(null)]
+    [DataRow("")]
+    [DataRow("0")]
+    [DataRow("99")]
+    [DataRow("23")]
+    public void IsBetween_Ints_Fail(string value)
     {
         // ^^^ Arrange ^^^
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{value} is not a valid number.",
+            $"{value} is not between 1 and 22."
+        ];
         int[] values = ConversionLogic.CreateNumArr(1, 22, 1);
         // Act
-        var (res, val, err) = InputLogic.IsInOptions(value, values);
+        var (res, val, err) = InputLogic.IsBetween(value, values.Min(), values.Max());
         // Assert
         Assert.IsFalse(res);
-        Assert.AreEqual(0, val);
-        Assert.IsNotNull(err);
+        Assert.IsLessThanOrEqualTo(0, val);
+        Assert.Contains(err, errs);
+    }
+    [TestMethod]
+    [DataRow(true, "YeS")]
+    [DataRow(false, "nO")]
+    [DataRow(true, "Yo")]
+    public void IsBoolean_InputLogic_Success(bool exp, string str)
+    {
+        // ^^^ Arrange ^^^
+        // Act
+        var (res, val, err) = InputLogic.IsBoolean(str);
+        // Assert
+        Assert.IsTrue(res);
+        Assert.AreEqual(exp, val);
+        Assert.IsNull(err);
+    }
+    [TestMethod]
+    [DataRow("")]
+    [DataRow(null)]
+    [DataRow("Woah")]
+    [DataRow("Unnoticed")]
+    [DataRow("Aye")]
+    public void IsBoolean_InputLogic_Fail(string str)
+    {
+        // Arrange
+        string[] errs = [
+            "Please enter at least one character.",
+            $"Please enter an answer starting with {"y".Bold()} or {"n".Bold()}."
+        ];
+        // Act
+        var (res, val, err) = InputLogic.IsBoolean(str);
+        // Assert
+        Assert.IsFalse(res);
+        Assert.IsFalse(val);
+        Assert.Contains(err, errs);
     }
 
     [TestMethod]
@@ -82,12 +125,16 @@ public sealed class InputLogicTests
     public void IsValidInteger_InputLogic_Fail(string str)
     {
         // ^^^ Arrange ^^^
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{str} is not a valid number."
+        ];
         // Act
         var (res, val, err) = InputLogic.IsValidInteger(str);
         // Assert
         Assert.IsFalse(res);
         Assert.AreEqual(-1, val);
-        Assert.IsNotNull(err);
+        Assert.Contains(err, errs);
     }
 
     [TestMethod]
@@ -114,18 +161,34 @@ public sealed class InputLogicTests
     [TestMethod]
     [DataRow("03-18-2006")]
     [DataRow("18/03/2006")]
+    [DataRow("Crazy")]
     [DataRow("")]
     [DataRow(null)]
-    [DataRow("Crazy")]
     public void IsValidDate_Date_Fail(string str)
     {
         // ^^^ Arrange ^^^
+        string[] formats = [
+        "MM/dd/yyyy",
+        "MM/d/yyyy",
+        "M/dd/yyyy",
+        "M/d/yyyy",
+        "MM/dd/yy",
+        "M/dd/yy",
+        "MM/d/yy",
+        "M/d/yy",
+        "MMM d, yyyy",
+        "MMM dd, yyyy"
+        ];
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{str} is not a valid date.\nPlease enter one of the following formats: {'\n' + string.Join(", ", formats)}"
+        ];
         // Act
         var (res, val, err) = InputLogic.IsValidDate(str);
         // Assert
         Assert.IsFalse(res);
         Assert.AreEqual(DateTime.MinValue, val);
-        Assert.IsNotNull(err);
+        Assert.Contains(err, errs);
     }
 
     [TestMethod]
@@ -146,22 +209,41 @@ public sealed class InputLogicTests
     [DataRow("03/18/2006", 2007)]
     [DataRow("03/8/2006", 2020)]
     [DataRow("18/03/2006", 2000)]
+    [DataRow("", 2000)]
+    [DataRow(null, 2000)]
     public void IsValidDate_DateAndBirthYear_Fail(string str, long birthYear)
     {
         // ^^^ Arrange ^^^
+        string[] formats = [
+        "MM/dd/yyyy",
+        "MM/d/yyyy",
+        "M/dd/yyyy",
+        "M/d/yyyy",
+        "MM/dd/yy",
+        "M/dd/yy",
+        "MM/d/yy",
+        "M/d/yy",
+        "MMM d, yyyy",
+        "MMM dd, yyyy"
+        ];
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{str} is not a valid date.\nPlease enter one of the following formats: {'\n' + string.Join(", ", formats)}",
+            $"The Join Date \'{str:MMM dd, yyyy}\' cannot be earlier than the birth year \'{birthYear}\'."
+        ];
         // Act
         var (res, val, err) = InputLogic.IsValidDate(str, birthYear);
         // Assert
         Assert.IsFalse(res);
         Assert.AreEqual(DateTime.MinValue, val);
-        Assert.IsNotNull(err);
+        Assert.Contains(err, errs);
     }
 
     [TestMethod]
-    [DataRow(20, 2007)]
-    [DataRow(30, 2025)]
-    [DataRow(56, 1970)]
-    public void IsValidAge_InputLogic_Success(long age, int year)
+    [DataRow("20", 2007)]
+    [DataRow("30", 2025)]
+    [DataRow("56", 1970)]
+    public void IsValidAge_InputLogic_Success(string age, int year)
     {
         // ^^^ Arrange ^^^
         // Act
@@ -172,18 +254,26 @@ public sealed class InputLogicTests
         Assert.IsNull(err);
     }
     [TestMethod]
-    [DataRow(10, 1900)]
-    [DataRow(0, 2025)]
-    [DataRow(999, 1000)]
-    public void IsValidAge_Fail(long age, int year)
+    [DataRow("10", 1900)]
+    [DataRow("0", 2025)]
+    [DataRow("999", 1000)]
+    [DataRow("", 1900)]
+    [DataRow(null, 0)]
+    [DataRow("Hello", 1550)]
+    public void IsValidAge_Fail(string age, int year)
     {
         // ^^^ Arrange ^^^
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{age} is not a valid number.",
+            $"The Composer cannot be younger than the Join Date ({age} <= {DateTime.Today.Year - year})."
+        ];
         // Act
         var (res, val, err) = InputLogic.IsValidAge(age, year);
         // Assert
         Assert.IsFalse(res);
         Assert.AreEqual(-1, val);
-        Assert.IsNotNull(err);
+        Assert.Contains(err, errs);
     }
 
     [TestMethod]
@@ -202,16 +292,23 @@ public sealed class InputLogicTests
     }
     [TestMethod]
     [DataRow("Nothing")]
+    [DataRow("Vidio Game")]
     [DataRow("")]
+    [DataRow(null)]
     public void IsValidGenre_InputLogic_Fail(string str)
     {
         // ^^^ Arrange ^^^
+        string[] names = [.. ConversionLogic.GetGenreNames().Order()];
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{str} is not a valid Genre.\nPlease enter one of the following options:\n{string.Join(", ", names)}"
+        ];
         // Act
         var (res, val, err) = InputLogic.IsValidGenre(str);
         // Assert
         Assert.IsFalse(res);
         Assert.AreEqual(0, (int)val);
-        Assert.IsNotNull(err);
+        Assert.Contains(err, errs);
     }
 
     [TestMethod]
@@ -232,19 +329,23 @@ public sealed class InputLogicTests
         Assert.IsNull(err);
     }
     [TestMethod]
-    [DataRow("")]
-    [DataRow(null)]
     [DataRow("Something else")]
     [DataRow("-1")]
+    [DataRow("")]
+    [DataRow(null)]
     public void IsValidAvailability_InputLogic_Fail(string str)
     {
         // ^^^ Arrange ^^^
+        string[] errs = [
+            "Please enter at least one character.",
+            "Please enter a valid availability."
+        ];
         // Act
         var (res, val, err) = InputLogic.IsValidAvailability(str);
         // Assert
         Assert.IsFalse(res);
         Assert.AreEqual(-1, val);
-        Assert.IsNotNull(err);
+        Assert.Contains(err, errs);
     }
     [TestMethod]
     [DataRow("\"8762_newgrounds_brent_.mp3\"")]
@@ -264,16 +365,32 @@ public sealed class InputLogicTests
     }
     [TestMethod]
     [DataRow("Random/path/to/nothing.mp3")]
+    [DataRow("testingPNG.png")]
     [DataRow("")]
     [DataRow(null)]
+
     public void IsValidMP3_InputLogic_Fail(string str)
     {
         // ^^^ Arrange ^^^
+        string? fileName = "..\\UnitTests";
+        string dir = Directory.GetParent(AppContext.BaseDirectory)!.Parent!.Parent!.Parent!.FullName;
+        string path = dir;
+        if (str?.Length > 0) 
+        { 
+            path = Path.Combine(dir, str);
+            fileName = ".." + str[Math.Max(str.LastIndexOf('/'), 0)..]; 
+        }
+        string[] errs = [
+            "Please enter at least one character.",
+            $"The given file \'{path}\' was not found.",
+            $"The given file \'{fileName}\' was not found.",
+            "The given file given cannot be used as an MP3.",
+        ];
         // Act
-        var (res, val, err) = InputLogic.IsValidMP3(str);
+        var (res, val, err) = InputLogic.IsValidMP3(path);
         // Assert
         Assert.IsFalse(res);
         Assert.IsEmpty(val);
-        Assert.IsNotNull(err);
+        Assert.Contains(err, errs);
     }
 }

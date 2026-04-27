@@ -41,13 +41,25 @@ public class SongLogic : AccessLogic<long, Song>
     public IEnumerable<Song> GetSongsFromComposer(string name) 
         => _sAccess.GetByComposer(name);
     public IEnumerable<Song> GetUnavailableSongs() => _sAccess.GetUnavailable();
-    public (bool InDatabase, long, string?) IsInDatabase(long id)
-        => _sAccess.GetByID(id) is not null ? (true, id, null) : 
-        (false, -1, $"{id} was not found in the database.");
-    public (bool, long, string?) IsNotInDatabase(long id)
-        => !IsInDatabase(id).InDatabase ? (true, id, null) : 
-        (false, -1, $"{id} already exists in the database.");
-    public (bool, long, string?) IsUniqueLevelID(long id)
-        => _sAccess.GetByLevelID(id) is null ? (true, id, null) : 
-        (false, -1, $"Level ID {id} has already been used.");
+    public (bool InDatabase, long, string?) IsInDatabase(string id)
+    {
+        var (res, val, err) = InputLogic.IsValidInteger(id);
+        if (!res) { return (false, -1, err); }
+        return _sAccess.GetByID(val) is not null ? (true, val, null) : 
+        (false, -1, $"{val} was not found in the database.");
+    }
+    public (bool, long, string?) IsNotInDatabase(string id)
+    {
+        var (res, val, err) = InputLogic.IsValidInteger(id);
+        if (!res) { return (false, -1, err); }
+        return _sAccess.GetByID(val) is null ? 
+        (true, val, null) : (false, -1, $"{id} already exists in the database.");
+    }
+    public (bool, long, string?) IsUniqueLevelID(string id)
+    {
+        var (res, val, err) = InputLogic.IsValidInteger(id);
+        if (!res) { return (false, -1, err); }
+        return _sAccess.GetByLevelID(val) is null ? (true, val, null) : 
+        (false, -1, $"Level ID {val} has already been used.");
+    }
 }

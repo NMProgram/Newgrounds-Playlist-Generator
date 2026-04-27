@@ -29,6 +29,7 @@ public sealed class SongLogicTests : TestStartup
         // Assert
         Assert.IsNull(notHere);
     }
+    [DoNotParallelize]
     [TestMethod]
     [DataRow(311087)]
     [DataRow(386900)]
@@ -265,51 +266,72 @@ public sealed class SongLogicTests : TestStartup
         Assert.HasCount(2, songs.First().Composers);
     }
     [TestMethod]
-    [DataRow(true, 598682)]
-    [DataRow(true, 311087)]
-    [DataRow(true, 643474)]
-    [DataRow(false, -1)]
-    public void IsInDatabase_SongLogic_ReturnsTuple(bool exp, long id)
+    [DataRow(true, "598682")]
+    [DataRow(true, "311087")]
+    [DataRow(true, "643474")]
+    [DataRow(false, "993042")]
+    [DataRow(false, "Hello")]
+    [DataRow(false, "")]
+    [DataRow(false, null)]
+    public void IsInDatabase_SongLogic_ReturnsTuple(bool exp, string id)
     {
         // ^^^ Arrange ^^^
-        
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{id} is not a valid number.",
+            $"{id} was not found in the database."
+        ];
         // Act
         var (res, val, err) = _sAccess.IsInDatabase(id);
         // Assert
         Assert.AreEqual(exp, res);
         Assert.AreEqual(exp, val != -1);
-        Assert.AreEqual(exp, err is null);
+        Assert.AreEqual(exp, !errs.Contains(err));
     }
     [TestMethod]
-    [DataRow(true, 1)]
-    [DataRow(true, 0)]
-    [DataRow(true, 49320429)]
-    [DataRow(false, 598682)]
-    public void IsNotInDatabase_SongLogic_ReturnsTuple(bool exp, long id)
+    [DataRow(true, "1")]
+    [DataRow(true, "0")]
+    [DataRow(true, "49320429")]
+    [DataRow(false, "598682")]
+    [DataRow(false, "Hello")]
+    [DataRow(false, "")]
+    [DataRow(false, null)]
+    public void IsNotInDatabase_SongLogic_ReturnsTuple(bool exp, string id)
     {
         // ^^^ Arrange ^^^
-        
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{id} is not a valid number.",
+            $"{id} already exists in the database."
+        ];
         // Act
         var (res, val, err) = _sAccess.IsNotInDatabase(id);
         // Assert
         Assert.AreEqual(exp, res);
         Assert.AreEqual(exp, val != -1);
-        Assert.AreEqual(exp, err is null);
+        Assert.AreEqual(exp, !errs.Contains(err));
     }
     [TestMethod]
-    [DataRow(true, 1)]
-    [DataRow(true, 1700)]
-    [DataRow(true, int.MaxValue)]
-    [DataRow(false, 99719)]
-    public void IsUniqueLevelID_SongLogic_ReturnsTuple(bool exp, long levelID)
+    [DataRow(true, "1")]
+    [DataRow(true, "1700")]
+    [DataRow(true, "2105492")]
+    [DataRow(false, "99719")]
+    [DataRow(false, "Hello")]
+    [DataRow(false, "")]
+    [DataRow(false, null)]
+    public void IsUniqueLevelID_SongLogic_ReturnsTuple(bool exp, string levelID)
     {
         // ^^^ Arrange ^^^
-        
+        string[] errs = [
+            "Please enter at least one character.",
+            $"{levelID} is not a valid number.",
+            $"Level ID {levelID} has already been used."
+        ];
         // Act
         var (res, val, err) = _sAccess.IsUniqueLevelID(levelID);
         // Assert
         Assert.AreEqual(exp, res);
         Assert.AreEqual(exp, val != -1);
-        Assert.AreEqual(exp, err is null);
+        Assert.AreEqual(exp, !errs.Contains(err));
     }
 }

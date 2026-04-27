@@ -69,13 +69,19 @@ public class Composer : IEquatable<Composer>, IComparable<Composer>, ICloneable,
     {
         foreach (var song in songs) { AddSong(song); }
     }
-    public int UpdateSong(long oldID, Song newSong)
+    public void RemoveSong(Song song)
     {
         for (int i = 0; i < Songs.Count; i++)
         {
-            if (oldID == Songs[i].ID) { Songs[i] = newSong; return i; }
+            if (song.ID == Songs[i].ID) { Songs.RemoveAt(i); song.RemoveComposer(this); }
         }
-        return -1;
+    }
+    public void UpdateSong(long oldID, Song newSong)
+    {
+        for (int i = 0; i < Songs.Count; i++)
+        {
+            if (oldID == Songs[i].ID) { Songs[i] = newSong;  }
+        }
     }
     public long GetAge() => DateTime.Today.Year - BirthYear;
     public void SetID(long id) => ID = Math.Max(id, 0);

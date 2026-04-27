@@ -1,15 +1,8 @@
-using System.ComponentModel.Design.Serialization;
 using System.Globalization;
-using NAudio.MediaFoundation;
 using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
 public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
 {
     private string _name;
-    static CancellationTokenSource _loadCTS = new();
-    static CancellationTokenSource _runCTS = new();
-    static WaveOutEvent? _output = null;
-    static WaveChannel32? _provider = null;
     public long ID { get; private set; }
     public string Name { get => _name; set => _name = string.IsNullOrEmpty(value) ? _name : value; }
     public DateTime ReleaseDate { get; private set; }
@@ -17,6 +10,7 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     public long LevelID { get; private set; }
     public long Available { get; private set; }
     public byte[] Audio { get; private set; }
+    private Audio AudioSetup;
     public List<Composer> Composers { get; } = [];
     public Song(long id, string name, string releaseDate, long genre,
     long levelID, long available, byte[] audio)
@@ -28,9 +22,11 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
         LevelID = levelID;
         Available = available;
         Audio = audio;
+        AudioSetup = new(Audio);
+        AudioSetup.SetupPlayback();
     }
     public Song(Song song) : this(song.ID, song.Name, song.ReleaseDate.ToString("yyyy-MM-dd HH:mm:ss"),
-    (int)song.Genre, song.LevelID, song.Available, song.Audio)
+    (int)song.Genre, song.LevelID, song.Available, song.AudioSetup.AudioBytes)
     {
         List<Composer> comps = [];
         foreach (var comp in song.Composers)
@@ -39,7 +35,7 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     }
     public object Clone()
     {
-        Song clone = new(ID, Name, ReleaseDate.ToString("yyyy-MM-dd HH:mm:ss"), (int)Genre, LevelID, Available, Audio);
+        Song clone = new(ID, Name, ReleaseDate.ToString("yyyy-MM-dd HH:mm:ss"), (int)Genre, LevelID, Available, AudioSetup.AudioBytes);
         foreach (var comp in Composers) { clone.AddComposer(new Composer(comp)); }
         return clone;
     }
@@ -55,60 +51,14 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     {
         foreach (var comp in composers.Distinct()) { AddComposer(comp); }
     }
-    public async Task PlayAsync()
+    public void RemoveComposer(Composer comp)
     {
-        var loadToken = ResetCTS(ref _loadCTS);
-        WaveFileReader? wavReader = null;
-        try
+        for (int i = 0; i < Composers.Count; i++)
         {
-            wavReader = await new AudioPlayer(Audio).CreateWavAsync(-12);
-            if (loadToken.IsCancellationRequested) { return; }
-            TaskCompletionSource<bool> tcs = new(false);
-            var runToken = ResetCTS(ref _runCTS);
-            await PlaybackAsync(wavReader, runToken);
+            if (comp.Name == Composers[i].Name) { Composers.RemoveAt(i); comp.RemoveSong(this); }
         }
-        catch (OperationCanceledException) 
-        { wavReader?.Dispose(); }
     }
-    async Task FadeOutAsync()
-    {
-        if (_output is null || _provider is null) { return; }
-        const float STEPS = 50;
-        const int DELAY = 10;
-        for (int i = 0; i < STEPS; i++)
-        {
-            _provider.Volume = 1f - (i / STEPS);
-            await Task.Delay(DELAY);
-        }
-        _output.Stop(); _output.Dispose();
-        _output = null; _provider = null;
-    }
-    static CancellationToken ResetCTS(ref CancellationTokenSource cts)
-    {
-        cts.Cancel();
-        cts = new CancellationTokenSource();
-        return cts.Token;
-    }
-    private async Task PlaybackAsync(WaveFileReader wavReader, CancellationToken token)
-    {
-        await FadeOutAsync();
-        WaveChannel32 provider = new(wavReader) { Volume = 1.0f };
-        WaveOutEvent output = new();
-        TaskCompletionSource<bool> tcs = new();
-        output.PlaybackStopped += (s, e) => tcs.TrySetResult(true);
-        output.Init(provider);
-        output.Play();
-        _output = output;
-        _provider = provider;
-        try
-        {
-            var cancelTask = Task.Delay(Timeout.Infinite, token);
-            var completed = await Task.WhenAny(tcs.Task, cancelTask);
-            await tcs.Task;
-        }
-        finally
-        { wavReader.Dispose(); }
-    }
+    public async Task PlayAsync() => await AudioSetup.PlayAsync();
     public int CompareTo(Song? other)
     {
         if (other is null) { return 1; }
@@ -119,7 +69,7 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     public bool Equals(Song? other)
     {
         if (other is null) { return false; }
-        return Audio.SequenceEqual(other.Audio) && ID == other.ID;
+        return AudioSetup.AudioBytes.SequenceEqual(Audio) && ID == other.ID;
     }
     public override bool Equals(object? obj) => Equals(obj as Song);
     public override int GetHashCode() => HashCode.Combine(Audio, ID);
@@ -130,6 +80,7 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
         bool succ = DateTime.TryParseExact(releaseDate, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime res);
         if (succ) { ReleaseDate = res; }
     }
+    public void SetReleaseDate(DateTime releaseDate) => ReleaseDate = releaseDate;
     public void SetGenre(long genre)
     {
         var vals = Enum.GetValues<Genre>().Select(x => (int)x);
@@ -137,11 +88,12 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     }
     public void SetLevelID(long id) => LevelID = Math.Max(id, 1);
     public void SetAvailable(long val) => Available = Math.Clamp(val, 0, 1);
-    public void SetAudio(byte[] audio) => Audio = audio;
+    public void SetAudio(byte[] audio) => AudioSetup = new(audio);
+    public string GetAudioTitle() => Audio.Title;
     string GetID() => $"Song ID: {ID}";
     string GetName() => $"Song Name: {Name}";
     string GetReleaseDate() => $"Release Date: " + ReleaseDate.ToString("MMM dd, yyyy");
-    string GetGenre() => $"Genre: {ConversionLogic.GetGenreName(Genre.ToString())}";
+    string GetGenre() => $"Genre: {Genre.GetGenreName()}";
     string GetLevelID() => $"First GD Level ID: {LevelID}";
     string GetAvailable() => $"Available on Newgrounds: {Available == 1}";
     string GetComposers()

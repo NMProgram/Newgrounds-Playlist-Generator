@@ -50,21 +50,40 @@ public class ComposerLogic : AccessLogic<string, Composer>
     public IEnumerable<Composer> GetBySongName(string name) 
         => _cAccess.GetComposersWithSong($"%{name}%");
     public (bool InDatabase, string, string?) IsInDatabase(string name)
-        => _cAccess.GetByName(name) is not null ? (true, name, null) : 
+    {
+        var (res, _, err) = InputLogic.IsNotEmpty(name);
+        if (!res) { return (false, "", err); }
+        return _cAccess.GetByName(name) is not null ? (true, name, null) : 
         (false, "", $"{name} was not found in the database.");
+    }
     public (bool, string, string?) IsNotInDatabase(string name)
-        => !IsInDatabase(name).InDatabase ? (true, name, null) : 
-        (false, "", $"{name} already exists in the database.");
-    public (bool, long, string?) IsNewSong(string name, long id)
-        => IsNewSong(_cAccess.GetByName(name)!, id);
-    public (bool, long, string?) IsNewSong(Composer comp, long id)
+    {
+        var (res, val, err) = InputLogic.IsNotEmpty(name);
+        if (!res) { return (res, val, err); }
+        return _cAccess.GetByName(name) is null ? (true, name, null) : (false, "", $"{name} already exists in the database.");
+    }
+    public (bool, long, string?) IsNewSong(string name, string id)
+    {
+        var (res, _, err) = IsInDatabase(name);
+        if (!res) { return (false, -1, err); }
+        var (res2, val2, err2) = InputLogic.IsValidInteger(id);
+        if (!res2) { return (res2, -1, err2); }
+        return TestNewSong(_cAccess.GetByName(name)!, val2);
+    }
+    (bool, long, string?) TestNewSong(Composer comp, long id)
     {
         IEnumerable<Song> songs = comp.Songs;
         Song? found = songs.FirstOrDefault(x => x.ID == id);
         return found is null ? (true, id, null) : 
         (false, -1, $"\'{comp.Name}\' already has the Song \'{found.Name}\' (ID \'{id}\').");
     }
-    public (bool, long, string?) IsNotNewSong(string name, long id)
-        => !IsNewSong(name, id).Item1 ? (true, id, null) : 
+    public (bool, long, string?) IsNotNewSong(string name, string id)
+    {
+        var (res, val, err) = IsInDatabase(name);
+        if (!res) { return (res, -1, err); }
+        var (res2, val2, err2) = InputLogic.IsValidInteger(id);
+        if (!res2) { return (res2, -1, err2); }
+        return _cAccess.GetByName(name)!.Songs.Any(x => x.ID == val2) ? (true, val2, null) : 
         (false, -1, $"\'{name}\' doesn't have a Song with ID \'{id}\'.");
+    }
 }

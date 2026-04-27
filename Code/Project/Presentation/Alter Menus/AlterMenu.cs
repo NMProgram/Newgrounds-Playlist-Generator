@@ -17,13 +17,23 @@ public class AlterMenu : MainMenu
         _ => () => _active = false
     };
     
-    
-    protected (TValue, TValue) SetUpdate<TKey, TValue>(TKey key, AccessLogic<TKey, TValue> getter, Action<TValue> action) where TValue : ICloneable
+    protected void Updater<TKey, TValue>(TaskRunner runner, Action<TValue, TKey> setter, 
+    Func<TValue, TKey, string> message, Action<TValue, TValue> updater) where TValue : ICloneable
     {
-        TValue o = getter.GetByID(key)!;
-        TValue n = (TValue)o.Clone();
-        action(n);
-        getter.Update(o, n);
-        return (o, n);
+        runner.RunTasks().Deconstruct(out TValue obj, out TKey val);
+        var copy = (TValue)obj.Clone();
+        setter(copy, val);
+        updater(obj, copy);
+        Console.WriteLine(message(obj, val));
+        Console.WriteLine($"\nNew {typeof(TValue)}:\n{copy}");
+        AskEnter();
     }
+    
+    protected object Delete<T>(T obj) where T : INamed 
+        => GetOption($"Are you sure you want to delete the {typeof(T)} {obj?.Name.Bold()}?\nEnter your choice here: ");
+    protected string UpdateMsg<T>(string type, T obj) where T : INamed 
+        => $"Successfully changed the {type} of the {typeof(T)} {obj.Name.Bold()}";
+    protected string UpdateMsg<T>(T old, T val) => $"from \'{old?.ToString()?.Bold()}\' to \'{val?.ToString()?.Bold()}\'!";
+    protected string UpdateMsg<TKey, TValue>(string type, TValue obj, TKey old, TKey val) where TValue : INamed
+        => UpdateMsg(type, obj) + ' ' + UpdateMsg(old, val);
 }

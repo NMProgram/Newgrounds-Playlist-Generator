@@ -62,7 +62,7 @@ public class ComposerAccess : Accessor
     }
     public void Delete(long id) 
         => Delete(new Composer(id, "", "2000-10-10 10:00:00", 0, "", 1));
-    public Composer? GetByName(string name) => GetFirst("WHERE c.name = @Name", new { Name = name });
+    public Composer? GetByName(string name) => GetFirst("WHERE LOWER(c.name) = @Name", new { Name = name.ToLower() });
     public IEnumerable<Composer> GetMatchResults(string search) 
         => GetComposers("WHERE c.name LIKE @Search OR c.joinDate LIKE @Search ORDER BY c.name", 
         new {Search = search});

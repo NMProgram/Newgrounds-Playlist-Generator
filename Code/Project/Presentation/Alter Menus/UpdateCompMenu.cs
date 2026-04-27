@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography.X509Certificates;
 
 [ExcludeFromCodeCoverage]
 public class UpdateCompMenu : AlterCompMenu
@@ -26,93 +27,94 @@ public class UpdateCompMenu : AlterCompMenu
         '8' => () => CheckActivity(Available),
         _ => () => _active = false
     };
-    (bool, long, string?) CheckSongIDs(string inp, string name, Func<string, long, (bool, long, string?)> func)
+    void Updater<T>(TaskRunner runner, Action<Composer, T> setter, Func<Composer, T, string> message)
     {
-        var tuple = CheckID(inp, _sLogic.IsInDatabase);
-        if (!tuple.Item1) { return tuple; }
-        return func(name, tuple.Item2);
+        Updater(runner, setter, message, _cLogic.Update);
     }
-    int ReplaceSong(Composer comp)
+    object GetOldName(ref Composer comp)
     {
-        long oldID = Validate("Enter the old ID of the Song to replace: ", 
-        x => CheckSongIDs(x, comp.Name, _cLogic.IsNotNewSong));
-        Song song = GetSong();
-        int i = comp.UpdateSong(oldID, song);
-        _cLogic.UpdateSong(comp, _sLogic.GetByID(oldID)!, song);
-        return i;
-    }
-    protected void UpdateData<T>(string type, Action<Composer> action, Func<Composer, T> getter, Func<T, T, string>? message = null)
-    {
-        string oldName = Validate(_prompts[0], x => ValidString(x, _cLogic.IsInDatabase));
-        var (o, n) = SetUpdate(oldName, _cLogic, action);
-        string msg = message is not null ? message(getter(o), getter(n)) : 
-        $"Successfully changed the {type} of the Composer {o.Name.Bold()} from \'{getter(o)}\' to \'{getter(n)}\'!";
-        Console.WriteLine(msg);
-        AskEnter();
-    }
-    void UpdateData<T>(Action<Composer> action, Func<Composer, T> getter, Func<T, T, string>? message)
-    {
-        UpdateData("", action, getter, message);
+        _name = GetOldName(_prompts[0]); comp = _cLogic.GetByID(_name)!; return comp;
     }
     void AddSong()
     {
-        Song song = null!;
-        void Action(Composer comp)
-        {
-            long id = Validate("Enter the ID of the Song to add: ", 
-            x => CheckSongIDs(x, comp.Name, _cLogic.IsNewSong));
-            song = _sLogic.GetByID(id)!;
-            comp.AddSong(song);
-            _cLogic.AddSong(comp, song);
-        }
-        UpdateData(Action, c => c.Name, (name, _) => 
-        $"Successfully added the following Song Details under the name \'{name}\':\n\n{song}");
+        Song song = null!; Composer comp = null!; TaskRunner runner = new();
+        runner.Add("Old Name", () => GetOldName(ref comp), c => ((Composer)c).FormatCompName())
+        .Add("New Name", () => _sLogic.GetByID(GetNewSongID("Enter the ID of the Song to add: ", comp))!)
+        .RunTasks()
+        .Deconstruct(out comp, out song);
+        _cLogic.AddSong(comp, song);
+        comp.AddSong(song);
+        Console.WriteLine($"Successfully added the following Song Details under the name \'{comp.Name}\':\n\n{song}");
+        AskEnter();
     }
     void UpdateSong()
     {
-        int index = 0;
-        UpdateData("Song", newComp => { index = ReplaceSong(newComp); }, 
-        any => any.Songs[index].Name);
+        Composer comp = null!; TaskRunner runner = new();
+        runner.Add("Old Name", () => GetOldName(ref comp), c => ((Composer)c).FormatCompName())
+        .Add("Old Song ID", () => _sLogic.GetByID(GetOldSongID("Enter the ID of the Song to replace: ", comp))!, s => ((Song)s).FormatSongID())
+        .Add("New Song ID", () => _sLogic.GetByID(GetNewSongID(NamedPrompt(5), comp))!, s => ((Song)s).FormatSongID())
+        .RunTasks()
+        .Deconstruct(out comp, out Song oldSong, out Song newSong);
+        _cLogic.UpdateSong(comp, oldSong, newSong);
+        comp.UpdateSong(oldSong.ID, newSong);
+        Console.WriteLine(UpdateMsg($"Song with Song ID {oldSong.ID}", comp, oldSong.Name, newSong.Name));
+        Console.WriteLine($"\nNew Composer:\n{comp}");
+        AskEnter();
     }
-    public void RemoveSong()
+    void RemoveSong()
     {
-        Song song = null!;
-        void Action(Composer comp)
-        {
-            long id = Validate("Enter the ID of the Song to remove: ",
-            x => CheckSongIDs(x, comp.Name, _cLogic.IsNotNewSong));
-            song = _sLogic.GetByID(id)!;
-            comp.Songs.Remove(song);
-            _cLogic.RemoveSong(comp, song);
-        }
-        UpdateData(Action, c => c.Name, (name, _) => 
-        $"Successfully removed the following Song details under the name \'{name}\':\n\n{song}");
+        Song song = null!; Composer comp = null!; TaskRunner runner = new();
+        runner.Add("Old Name", () => GetOldName(ref comp), c => ((Composer)c).FormatCompName())
+        .Add("Old Song ID", () => { song = _sLogic.GetByID(GetOldSongID("Enter the ID of the Song to remove: ", comp))!; return song; }, s => ((Song)s).FormatSongID())
+        .Add("Confirm", () => GetOption($"Are you sure you want to delete the Song \'{song.Name.Bold()}\' from the Composer \'{comp.Name.Bold()}\'?\nEnter your choice here: "))
+        .RunTasks()
+        .Deconstruct(out comp, out song, out bool delete);
+        if (!delete) { Console.WriteLine($"Cancelled deletion of \'{song.Name.Bold()}\' from \'{comp.Name.Bold()}\''s collection."); return; }
+        _cLogic.RemoveSong(comp, song);
+        comp.RemoveSong(song);
+        Console.WriteLine($"Successfully removed the following Song Details under the name {comp.Name.Bold()}:\n\n{song}");
+        AskEnter();
     }
     void Name()
     {
-        UpdateData("Name", newComp => newComp.SetName(GetName()), any => any.Name);
+        TaskRunner runner = new();
+        runner.Add("Old Name", () => { _name = GetOldName(_prompts[0]); return _cLogic.GetByID(_name)!; }, c => ((Composer)c).FormatCompName())
+        .Add("New Name", () => GetNewName(_prompts[0]));
+        Updater<string>(runner, (c, val) => c.SetName(val),
+        (c, val) => UpdateMsg("Name", c) + $" to {val.Bold()}!");
     }
     public void Date()
     {
-        UpdateData("Join Date", newComp => {
-            DateTime date = Validate(NamedPrompt(1), x => ValidString(x, y => InputLogic.IsValidDate(y, newComp.BirthYear)));
-            newComp.SetJoinDate(date);
-        },
-        any => any.JoinDate.ToString("MMM dd, yyyy"));
+        TaskRunner runner = new();
+        Composer comp = null!;
+        runner.Add("Old Name", () => GetOldName(ref comp), c => ((Composer)c).FormatCompName())
+        .Add("New Join Date", () => GetDate(NamedPrompt(1), comp.BirthYear), d => ((DateTime)d).FormatDate());
+        Updater<DateTime>(runner, (c, val) => c.SetJoinDate(val), 
+        (c, val) => UpdateMsg("Join Date", c, c.JoinDate.ToString("MMM dd, yyyy"), val.ToString("MMM dd, yyyy")));
     }
     void Age()
     {
-        UpdateData("Age", newComp => newComp.SetAge(GetAge(newComp.JoinDate.Year)),
-        any => any.GetAge() > -1 ? any.GetAge().ToString() : "Unknown");
+        TaskRunner runner = new();
+        Composer comp = null!;
+        runner.Add("Old Name", () => GetOldName(ref comp), c => ((Composer)c).FormatCompName())
+        .Add("New Birth Year", () => GetAge(NamedPrompt(2), comp.JoinDate.Year), a => ((long)a).AgeStr());
+        Updater<long>(runner, (c, val) => c.SetAge(val), 
+        (c, val) => UpdateMsg("Birth Year", c, c.GetAge().AgeStr(), val.AgeStr()));
     }
     void Description()
     {
-        Func<Composer, string> getter = any => any.Description.Replace("\n", " ").Bold();
-        UpdateData("Description", newComp => newComp.SetDescription(GetDescription()), getter);
+        TaskRunner runner = new();
+        runner.Add("Old Name", () => { _name = GetOldName(_prompts[0]); return _cLogic.GetByID(_name)!; }, c => ((Composer)c).FormatCompName())
+        .Add("New Description", () => Default(NamedPrompt(3)).Replace("\\n", "\n"), d => ((string)d).DescPrinter());
+        Updater<string>(runner, (c, val) => c.SetDescription(val), 
+        (c, val) => UpdateMsg("Description", c, c.Description.DescPrinter().Bold(), val.DescPrinter().Bold()));
     }
     void Available()
     {
-        UpdateData("Availability on Newgrounds", newSong => newSong.SetAvailability(GetAvailability()),
-        any => any.OnNewgrounds == 1);
+        TaskRunner runner = new();
+        runner.Add("Old Name", () => { _name = GetOldName(_prompts[0]); return _cLogic.GetByID(_name)!; }, c => ((Composer)c).FormatCompName())
+        .Add("New Availability on NG", () => GetAvailable(NamedPrompt(4)), sb => ((sbyte)sb).FormatSbyte());
+        Updater<sbyte>(runner, (c, val) => c.SetAvailability(val), 
+        (c, val) => $"{UpdateMsg("Availability", c)} on Newgrounds {UpdateMsg(c.OnNewgrounds > 1, val > 1)}");
     }
 }

@@ -29,67 +29,49 @@ public class FilterSongMenu : FilterMenu
         '9' => () => CheckActivity(FromComposer),
         _ => () => _active = false
     };
-    void IDChecker(Func<long, long, IEnumerable<Song>> selector, string prefix = "")
-    {
-        prefix = $" {prefix} ";
-        long lowID = Validate($"Enter the first{prefix}ID: ", x => ValidString(x, InputLogic.IsValidInteger));
-        long highID = Validate($"Enter the last{prefix}ID: ", x => ValidString(x, InputLogic.IsValidInteger));
-        IEnumerable<Song> songs = selector(lowID, highID);
-        PrintDetails(songs);
-    }
-    void PrintDetails(IEnumerable<Song> songs)
-    {
-        PrintDetails([..songs.DistinctBy(x => x.ID)], song => $"\'{song.Name}\' (ID: {song.ID})");
-    }
+    static string Getter(Song song) => $"\'{song.Name}\' (ID: {song.ID})";
     void ClosestID()
     {
-        long id = Validate("Enter an ID: ", InputLogic.IsValidInteger);
-        Song? song = _sLogic.GetClosestMatch(id);
+        TaskRunner runner = new();
+        object[] res = runner.Add("Song ID", () => GetInteger("Enter an ID: "))
+        .RunTasks();
+        Song? song = _sLogic.GetClosestMatch((long)res[0]);
         PrintDetails(song);
     }
     void Match()
     {
-        string search = Input("Enter a search term to filter by: ");
-        IEnumerable<Song> songs = _sLogic.GetSongMatches(search);
-        PrintDetails(songs);
+        FilterData("Enter a search term to filter by: ", "Search Term", GetString, _sLogic.GetSongMatches, Getter);
     }
     void BetweenIDs()
     {
-        IDChecker(_sLogic.GetBetweenSongData);
+        FilterData("Enter the first ID: ", $"Enter the last ID: ", "Song ID", GetInteger, _sLogic.GetBetweenSongData, Getter);
     }
     void BetweenLevelIDs()
     {
-        IDChecker(_sLogic.GetBetweenLevelIDs, "Level");
+        FilterData("Enter the first Level ID: ", "Enter the last Level ID: ", "Level ID", GetInteger, _sLogic.GetBetweenLevelIDs, Getter);
     }
     void BetweenNames()
     {
-        string first = Validate("Enter the first name: ", InputLogic.IsNotEmpty);
-        string last = Validate("Enter the last name: ", InputLogic.IsNotEmpty);
-        IEnumerable<Song> songs = _sLogic.GetBetweenSongData(first, last);
-        PrintDetails(songs);
+        string start = "Enter the first name: ";
+        string end = "Enter the last name: ";
+        FilterData(start, end, "Name", GetString, _sLogic.GetBetweenSongData, Getter);
     }
     void BetweenDates()
     {
-        DateTime first = Validate("Enter the starting date: ", x => ValidString(x, InputLogic.IsValidDate));
-        DateTime last = Validate("Enter the ending date: ", x => ValidString(x, InputLogic.IsValidDate));
-        IEnumerable<Song> songs = _sLogic.GetBetweenSongData(first, last);
-        PrintDetails(songs);
+        string start = "Enter the starting date: ";
+        string end = "Enter the ending date: ";
+        FilterData(start, end, "Release Date", GetDate, _sLogic.GetBetweenSongData, Getter, d => ((DateTime)d).FormatDate());
     }
-    void WithGenre()
+    public void WithGenre()
     {
-        Genre genre = Validate("Enter a Genre to filter by: ", x => ValidString(x, InputLogic.IsValidGenre));
-        IEnumerable<Song> songs = _sLogic.GetByGenre(genre);
-        PrintDetails(songs);
+        FilterData("Enter a Genre to filter by: ", "Genre", GetGenre, _sLogic.GetByGenre, Getter, g => ((Genre)g).GetGenreName());
     }
     void UnavailableSongs()
     {
-        IEnumerable<Song> songs = _sLogic.GetUnavailableSongs();
-        PrintDetails(songs);
+        FilterData("", "", x => "", (_) => _sLogic.GetUnavailableSongs(), Getter);
     }
     void FromComposer()
     {
-        string name = Validate("Enter the name of a Composer: ", x => ValidString(x, _cLogic.IsInDatabase))!;
-        IEnumerable<Song> songs = _sLogic.GetSongsFromComposer(name)!;
-        PrintDetails(songs);
+        FilterData("Enter the name of a Composer: ", "Composer Name", GetOldName, _sLogic.GetSongsFromComposer, Getter);
     }
 }

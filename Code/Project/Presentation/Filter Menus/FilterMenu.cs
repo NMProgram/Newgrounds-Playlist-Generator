@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Security.AccessControl;
 
 [ExcludeFromCodeCoverage]
 public class FilterMenu : MainMenu
@@ -14,29 +16,42 @@ public class FilterMenu : MainMenu
         '2' => new FilterCompMenu().Start,
         _ => () => _active = false
     };
-    protected void PrintDetails<T>(T? obj)
+    void SetupPrint<T>(ref T[] objs, TaskRunner runner)
     {
-        Console.WriteLine("\nFound result:\n");
-        string msg = obj is null ? "No results found." : obj.ToString()!;
-        Console.WriteLine(msg);
-        AskEnter();
+        object[] values = runner.RunTasks();
+        if (objs.Length < 2 || values[^1] is not long) { PrintDetails(objs, (_) => ""); return; }
+        PrintDetails(objs[(long)values[^1] - 1]);
     }
-    protected void PrintDetails<T>(T[] objs, Func<T, string> getter)
+    object GetOption<T>(T[] objs, Func<T, string> getter)
+        => GetBetweenValues("\nEnter the number next to the entry you wish to check out: ", 1, objs, getter);
+    protected void FilterData<TEntity, TResult>(string msg, string type, Func<string, TResult> funcType,
+    Func<TResult, IEnumerable<TEntity>> filter, Func<TEntity, string> getter, Func<object, string>? formatter = null)
     {
-        switch (objs.Length)
+        TResult value = default!; TEntity[] objs = []; TaskRunner runner = new();
+        object GetResults()
         {
-            case 0: Console.WriteLine("No results found."); AskEnter(); return;
-            case 1: PrintDetails(objs[0]); return;
+            value = funcType(msg);
+            objs = [.. filter(value).DistinctBy(x => getter(x))];
+            if (objs.Length > 1)
+            { runner.Add(new("Search Result", () => GetOption(objs, getter))); }
+            return value!;
         }
-        Console.WriteLine($"Found {objs.Length} results:\n");
-        for (int i = 0; i < objs.Length; i++)
+        runner.Add(type, GetResults, formatter);
+        SetupPrint(ref objs, runner);
+    }
+    protected void FilterData<TEntity, TResult>(string startMsg, string endMsg, string type, Func<string, TResult> funcType,
+    Func<TResult, TResult, IEnumerable<TEntity>> filter, Func<TEntity, string> getter, Func<object, string>? formatter = null)
+    {
+        TResult first = default!; TResult last = default!; TEntity[] objs = []; TaskRunner runner = new();
+        object GetLast()
         {
-            T? obj = objs[i];
-            Console.WriteLine($"#{i + 1}: {getter(obj)}");
+            last = funcType(endMsg);
+            objs = [.. filter(first, last).DistinctBy(x => getter(x))];
+            if (objs.Length > 1) { runner.Add(new("Search Result", () => GetOption(objs, getter))); }
+            return last!;
         }
-        long[] list = ConversionLogic.CreateNumArr<long>(1, objs.Length, 1);
-        long option = Validate("\nEnter the number next to the entry you wish to check out: ", 
-        x => ValidID(x, y => InputLogic.IsInOptions(y, list)));
-        PrintDetails(objs[option - 1]);
+        runner.Add("First " + type, () => { first = funcType(startMsg); return first!; }, formatter);
+        runner.Add("Last " + type, GetLast, formatter);
+        SetupPrint(ref objs, runner);
     }
 }

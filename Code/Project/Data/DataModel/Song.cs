@@ -93,7 +93,7 @@ public class Song : IEquatable<Song>, IComparable<Song>, ICloneable, INamed
     string GetID() => $"Song ID: {ID}";
     string GetName() => $"Song Name: {Name}";
     string GetReleaseDate() => $"Release Date: " + ReleaseDate.ToString("MMM dd, yyyy");
-    string GetGenre() => $"Genre: {ConversionLogic.GetGenreName(Genre.ToString())}";
+    string GetGenre() => $"Genre: {Genre.GetGenreName()}";
     string GetLevelID() => $"First GD Level ID: {LevelID}";
     string GetAvailable() => $"Available on Newgrounds: {Available == 1}";
     string GetComposers()

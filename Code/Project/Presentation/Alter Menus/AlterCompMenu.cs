@@ -6,9 +6,9 @@ using SQLitePCL;
 public class AlterCompMenu : AlterMenu
 {
     protected readonly string[] _prompts = [
-        "Enter the Composer's Name: ", "Enter the Join Date of the Composer: ", 
-        "Enter the Composer's Age: ", "Enter the Composer's Description: ", 
-        "Enter if the Composer is on Newgrounds: ", 
+        "Enter the Composer's Name: ", "Enter the Join Date of the Composer: ",
+        "Enter the Composer's Age: ", "Enter the Composer's Description: ",
+        "Enter if the Composer is on Newgrounds: ",
         "Enter the ID of a Song from this Composer: "
         ];
     protected override string MenuStr => @"
@@ -28,40 +28,21 @@ public class AlterCompMenu : AlterMenu
     {
         return _prompts[index].Replace("the Composer", _name);
     }
-    (bool, long, string?) CheckAge(string inp, int year)
-    {
-        if (!InputLogic.IsNotEmpty(inp).Item1) { return (true, -1, null); }
-        return ValidID(inp, x => InputLogic.IsValidAge(x, year));
-    }
-    // protected long GetID(Func<long, (bool, long, string?)> func, bool n = false) 
-    //     => Validate(n ? _prompts[0].Insert(9, " new") : _prompts[0], x => CheckID(x, func));
-    protected string GetName() => Validate(_prompts[0], InputLogic.IsNotEmpty);
-    protected string GetName(Func<string, (bool, string, string?)> func) 
-        => Validate(_prompts[0], InputLogic.IsNotEmpty, func);
-    protected DateTime GetJoinDate() 
-        => Validate(NamedPrompt(1), x => ValidString(x, InputLogic.IsValidDate));
-    protected long GetAge(int year) => Validate(NamedPrompt(2), x => CheckAge(x, year));
-    protected string GetDescription() => Input(NamedPrompt(3)).Replace("\\n", "\n");
-    protected byte GetAvailability() 
-        => (byte) Validate(NamedPrompt(4), x => ValidString(x, InputLogic.IsValidAvailability));
-    protected Song GetSong() 
-        => _sLogic.GetByID(
-            Validate(
-                NamedPrompt(5), 
-                x => ValidString(
-                    x, y => CheckID(y, _sLogic.IsInDatabase)
-                )
-            )
-        )!;
-    long GetBirthYear(long age) => age == -1 ? age : DateTime.Today.Year - age;
+    
+    
     Composer GetCompDetails()
     {
-        string name = GetName(_cLogic.IsNotInDatabase);
-        _name = name;
-        DateTime joinDate = GetJoinDate();
-        Composer comp = new(1, name, joinDate.ToString("yyyy-MM-dd HH:mm:ss"), 
-        GetBirthYear(GetAge(joinDate.Year)), GetDescription(), GetAvailability());
-        comp.AddSong(GetSong());
+        DateTime joinDate = DateTime.MinValue; TaskRunner runner = new();
+        runner.Add("Name", () => { _name = GetNewName(_prompts[0]); return _name; })
+        .Add("Join Date", () => { joinDate = GetDate(NamedPrompt(1)); return joinDate; }, d => ((DateTime)d).FormatDate())
+        .Add("Birth Year", () => GetAge(NamedPrompt(2), joinDate.Year), a => ((long)a).AgeStr())
+        .Add("Description", () => Default(NamedPrompt(3)).Replace("\\n", "\n"), d => ((string)d).DescPrinter())
+        .Add("Available on Newgrounds", () => GetAvailable(NamedPrompt(4)), sb => ((sbyte)sb).FormatSbyte())
+        .Add("Song ID", () => _sLogic.GetByID(GetOldID(NamedPrompt(5)))!)
+        .RunTasks()
+        .Deconstruct(out string name, out joinDate, out long age, out string desc, out sbyte available, out Song song);
+        Composer comp = new(1, name, joinDate.ToString("yyyy-MM-dd HH:mm:ss"), age.ToYear(), desc, available);
+        comp.AddSong(song);
         return comp;
     }
     void Add()
@@ -73,11 +54,23 @@ public class AlterCompMenu : AlterMenu
     }
     void Delete()
     {
-        string oldName = Validate(_prompts[0], InputLogic.IsNotEmpty, _cLogic.IsInDatabase);
-        Composer comp = _cLogic.GetByID(oldName)!;
-        string inp = Input($"Are you sure you want to delete the composer \'{comp.Name}\'?\nEnter your choice here: ");
-        if (!inp.ToLower().StartsWith('y')) { Console.WriteLine($"Cancelled deletion of \'{comp.Name}\'."); return; }
-        Console.WriteLine($"Successfully deleted the following Song Details:\n\n{comp}");
+        Composer comp = null!; TaskRunner runner = new();
+        object GetComp()
+        {
+            string name = GetOldName(_prompts[0]);
+            comp = _cLogic.GetByID(name)!;
+            return comp;
+        }
+        runner.Add("Old Name", GetComp, c => ((Composer)c).FormatCompName())
+        .Add("Confirm", () => Delete(comp), c => ((Composer)c).Name)
+        .RunTasks()
+        .Deconstruct(out comp, out bool delete);
+        if (!delete) { Console.WriteLine($"Cancelled deletion of \'{comp.Name}\'."); }
+        else
+        {
+            _cLogic.Delete(comp);
+            Console.WriteLine($"Successfully deleted the following Composer Details:\n\n{comp}");
+        }
         AskEnter();
     }
 }

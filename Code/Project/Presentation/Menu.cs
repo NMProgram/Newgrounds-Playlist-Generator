@@ -1,6 +1,10 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Reflection;
 using System.Threading.Channels;
+using NAudio.CoreAudioApi;
+using SQLitePCL;
 [ExcludeFromCodeCoverage]
 public abstract class Menu
 {
@@ -9,56 +13,37 @@ public abstract class Menu
     protected ComposerLogic _cLogic = new(new InFile());
     protected abstract string MenuStr { get; }
     protected abstract Action GetAction(char inp);
-    protected static char InputKey(string msg)
-    {
-        Console.Write(msg);
-        return Console.ReadKey().KeyChar;
-    }
-    protected static string Input(string msg)
-    {
-        Console.Write(msg);
-        return Console.ReadLine() ?? "";
-    }
-    void Exit()
+    static void Exit(string? msg)
     {
         Console.Clear();
-        Console.WriteLine("Successfully exited back to the last Menu!");
+        if (string.IsNullOrEmpty(msg)) { return; }
+        Console.WriteLine(msg);
         AskEnter();
         Console.Clear();
     }
     protected void CheckActivity(Action action)
     {
         try { action(); }
-        catch (ReturnedException) { Exit(); }
+        catch (ReturnedException ex) { Exit(ex.Message); }
+        catch (TracebackException) { Exit(null); }
     }
     static string Clean(string str) => str.Replace("\r\n", "").Trim().Replace("    ", "\n");
-    protected T Validate<T>(string msg, params Func<string, (bool, T, string?)>[] funcs)
+    protected T Validate<T>(string msg, Func<string, (bool, T, string?)> func, Action? action = null) 
+        => Validation.Validate(msg, func, action);
+    protected string Validate(string msg)
+        => Validate<string>(msg, str => (true, str, null));
+    public static void AskEnter()
     {
-        while (true)
-        {
-            string inp = Input(msg);
-            if (inp == "\\") { throw new ReturnedException(); }
-            for (int i = 0; i < funcs.Length; i++)
-            {
-                var (res, val, err) = funcs[i](inp);
-                if (!res && err is not null) { Console.WriteLine($"Error: {err.Bold()}"); break; }
-                else if (i == funcs.Length - 1) { return val; }
-            }
-        }
-    }
-    protected void AskEnter()
-    {
-        InputKey("\nPress any key to continue: ");
+        Validation.InputKey("\nPress any key to continue: ");
         Console.Clear();
     }
     public void Start()
     {
-        
         char chr;
         do
         {
             Console.WriteLine(Clean(MenuStr));
-            chr = InputKey("\nEnter your choice here: ");
+            chr = Validation.InputKey("\nEnter your choice here: ");
             Action action = GetAction(char.ToUpper(chr));
             Console.Clear();
             action();

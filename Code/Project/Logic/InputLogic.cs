@@ -92,7 +92,7 @@ public static class InputLogic
     }
     static (bool, Genre, string?) TestGenre(string genre)
     {
-        string[] names = [.. ConversionLogic.GetGenreNames().Order()];
+        string[] names = [.. EnumUtils.GetGenreNames().Order()];
         string err = $"{genre} is not a valid Genre.\nPlease enter one of the following options:\n{string.Join(", ", names)}";
         string newGenre = new([.. genre.Where(x => x != ' ' && x != '-')]);
         if (newGenre.Equals("R&B", StringComparison.OrdinalIgnoreCase))
@@ -113,7 +113,7 @@ public static class InputLogic
             path = path.Trim();
             path = path.Replace("\"", "").Replace("\'", "");
             byte[] bytes = File.ReadAllBytes(path);
-            return ConversionLogic.VerifyMP3(path) ? (true, bytes, null) : (false, [], "The given file given cannot be used as an MP3.");
+            return path.VerifyMP3() ? (true, bytes, null) : (false, [], "The given file given cannot be used as an MP3.");
         }
         catch
         {

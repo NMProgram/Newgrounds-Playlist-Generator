@@ -1,3 +1,4 @@
+using System.Numerics;
 public static class ArrayUtils
 {
     extension(byte[] bytes)
@@ -12,7 +13,22 @@ public static class ArrayUtils
             }
         }
     }
-    public static string FormatAudio(this object a) => (a as byte[])!.Title;
+    public static string FormatAudio(this byte[] a) => a.Title;
+    public static short[] ToShorts(this byte[] arr)
+    {
+        int count = arr.Length / 2;
+        short[] samples = new short[count];
+        Buffer.BlockCopy(arr, 0, samples, 0, count * 2);
+        return samples;
+    }
+    public static byte[] ToBytes(this short[] arr)
+    {
+        byte[] bytes = new byte[arr.Length * 2];
+        Buffer.BlockCopy(arr, 0, bytes, 0, bytes.Length);
+        return bytes;
+    }
+    public static T[] CreateNumArr<T>(T min, T max, T step) where T : INumber<T>
+        => [.. Enumerable.Sequence(min, max, step)];
     public static void Deconstruct<T1, T2>(this object[] arr, out T1 first, out T2 second)
     {
         if (arr is null || arr.Length == 0)

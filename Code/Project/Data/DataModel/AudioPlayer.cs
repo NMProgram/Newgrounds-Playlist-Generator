@@ -1,48 +1,72 @@
-using System.Buffers;
-using System.Numerics;
+using System.Diagnostics.CodeAnalysis;
 using NAudio.Wave;
-public class AudioPlayer
+using NAudio.Wave.SampleProviders;
+public static class AudioPlayer
 {
-    byte[] Audio { get; }
-    public AudioPlayer(byte[] audio) => Audio = audio;
-    public async Task<WaveFileReader> CreateWavAsync(double target)
-        => await Task.Run(() => CreateWav(target));
-    WaveFileReader CreateWav(double target)
+    const float _minRMS = 1E-3f;
+    const int _blockSize = 2048;
+    public static (TaskCompletionSource<bool>, WaveOutEvent) SetupAudio(ISampleProvider provider)
     {
-        float[] pcm = RunBuffer(out WaveFormat format);
-        ApplyGain(pcm, (float)Math.Pow(10, (target - CalculateRMS(pcm)) / 20));
-        MemoryStream wavStream = new();
-        WaveFileWriter.WriteWavFileToStream(wavStream, new CustomWaveProvider(pcm, format));
-        wavStream.Position = 0;
-        return new(wavStream);
+        WaveOutEvent output = new();
+        TaskCompletionSource<bool> tcs = new();
+        output.PlaybackStopped += (s, e) => tcs.TrySetResult(true); // subscribes PlaybackStopped event to tcs
+        output.Init(provider);
+        output.Play();
+        return (tcs, output);
     }
-    float[] RunBuffer(out WaveFormat format)
+    public static short[] TrimAudio(byte[] bytes)
     {
-        Mp3FileReader reader = new(new MemoryStream(Audio, writable: false));
-        var provider = reader.ToSampleProvider();
-        float[] buffer = ArrayPool<float>.Shared.Rent(262144);
-        List<float> samples = []; format = provider.WaveFormat; int read;
-        while ((read = provider.Read(buffer, 0, buffer.Length)) > 0)
-        { samples.AddRange(buffer.AsSpan(0, read)); }
-        ArrayPool<float>.Shared.Return(buffer);
-        return [.. samples];
-    }
-    double CalculateRMS(float[] buffer)
-    {
-        double sum = 0; long count = buffer.Length;
-        int i = 0; int simd = Vector<float>.Count;
-        for (; i <= buffer.Length - simd; i += simd)
+        short[] samples = bytes.ToShorts();
+        int first = -1; int last = -1;
+        for (int b = 0; b < _blockSize; b++)
         {
-            Vector<float> vector = new(buffer, i);
-            sum += Vector.Dot(vector, vector);
+            if (CheckBlock(b, samples, out double rms) && rms > _minRMS)
+            { first = first == -1 ? b : first; last = b; }
         }
-        for (; i < buffer.Length; i++)
-        { sum += buffer[i] * buffer[i]; }
-        return 20 * Math.Log10(Math.Sqrt(sum / count));
+        if (first == -1 || last == -1) { return samples; }
+        int start = first * _blockSize; int end = last * _blockSize;
+        return samples[start..(end + 1)];
     }
-    void ApplyGain(float[] buffer, float factor)
+    static byte[] CreatePCMBytes(byte[] mp3Bytes)
     {
-        for (int i = 0; i < buffer.Length; i++)
-        { buffer[i] *= factor; }
+        using var reader = new Mp3FileReader(new MemoryStream(mp3Bytes));
+        using var resampler = new MediaFoundationResampler(reader, new WaveFormat(44100, 16, 1))
+        { ResamplerQuality = 60 };
+        using var ms = new MemoryStream();
+        byte[] buffer = new byte[8192]; // reads in chunks
+        int read;
+        while ((read = resampler.Read(buffer, 0, buffer.Length)) > 0)
+        { ms.Write(buffer, 0, read); }
+        return ms.ToArray();
+    }
+    public static (float, byte[]) CalculateRMS(byte[] mp3Bytes)
+    {
+        byte[] pcmBytes = CreatePCMBytes(mp3Bytes);
+        if (pcmBytes.Length < 2)
+        { return (0, pcmBytes); }
+        short[] samples = TrimAudio(pcmBytes);
+        int blocks = samples.Length / _blockSize;
+        double totalRMS = 0; int valid = 0;
+        for (int b = 0; b < blocks; b++)
+        {
+            if (CheckBlock(b, samples, out double rms))
+            { totalRMS += rms; valid++; }
+        }
+        if (totalRMS == 0) { return (0, samples.ToBytes()); }
+        float rmsVal = (float)(totalRMS / valid);
+        return (rmsVal > 0f ? 0.3f / rmsVal : 1f, samples.ToBytes());
+    }
+    static bool CheckBlock(int block, short[] samples, out double rms)
+    {
+        double sum = 0;
+        int start = block * _blockSize;
+        for (int i = 0; i < _blockSize; i++)
+        {
+            if (start + i >= samples.Length) { break; }
+            double s = samples[start + i] / 32768.0;
+            sum += s * s;
+        }
+        rms = Math.Sqrt(sum / _blockSize);
+        return rms > _minRMS;
     }
 }
